@@ -574,12 +574,184 @@ switch ($action) {
         jsonResponse(['status'=>'success','data'=>$stmt->fetchAll()]);
         break;
 
+    // ═══════════════════════════════════════
+    // STOK OPNAME (Fase 4)
+    // ═══════════════════════════════════════
+    case 'getStockOpname':
+        $db = getDB();
+        $stmt = $db->query("SELECT so.*, u.nama AS user_nama FROM stok_opname so LEFT JOIN users u ON so.user_id = u.id ORDER BY so.id DESC");
+        jsonResponse(['status'=>'success','data'=>$stmt->fetchAll()]);
+        break;
+
+    case 'addStockOpname':
+        $db = getDB();
+        $db->beginTransaction();
+        try {
+            $noOp = generateCode('OP', 'stok_opname', 'no_opname', 6);
+            $stmt = $db->prepare("INSERT INTO stok_opname (no_opname, tanggal, keterangan, user_id) VALUES (:no, :tgl, :ket, :uid)");
+            $stmt->execute(['no'=>$noOp, 'tgl'=>$data['tanggal'] ?? date('Y-m-d'), 'ket'=>$data['keterangan'] ?? '', 'uid'=>$_SESSION['user_id'] ?? null]);
+            $opId = $db->lastInsertId();
+
+            if (!empty($data['items']) && is_array($data['items'])) {
+                $dt = $db->prepare("INSERT INTO stok_opname_detail (opname_id, barang_id, stok_sistem, stok_fisik, selisih, keterangan) VALUES (:op, :brg, :ss, :sf, :sel, :ket)");
+                foreach ($data['items'] as $item) {
+                    $selisih = ($item['stok_fisik'] ?? 0) - ($item['stok_sistem'] ?? 0);
+                    $dt->execute(['op'=>$opId, 'brg'=>$item['barang_id'], 'ss'=>$item['stok_sistem'], 'sf'=>$item['stok_fisik'], 'sel'=>$selisih, 'ket'=>$item['keterangan'] ?? '']);
+                    $db->prepare("UPDATE barang SET stok = :stok WHERE id = :id")->execute(['stok'=>$item['stok_fisik'], 'id'=>$item['barang_id']]);
+                }
+            }
+            $db->commit();
+            jsonResponse(['status'=>'success','message'=>'Stock opname tersimpan','data'=>['id'=>$opId,'no_opname'=>$noOp]]);
+        } catch (Exception $e) {
+            $db->rollBack();
+            jsonResponse(['status'=>'error','message'=>'Gagal: '.$e->getMessage()], 500);
+        }
+        break;
+
+    // ═══════════════════════════════════════
+    // RETUR (Fase 4)
+    // ═══════════════════════════════════════
+    case 'getRetur':
+        $db = getDB();
+        $stmt = $db->query("SELECT r.*, u.nama AS user_nama FROM retur r LEFT JOIN users u ON r.user_id = u.id ORDER BY r.id DESC");
+        jsonResponse(['status'=>'success','data'=>$stmt->fetchAll()]);
+        break;
+
+    case 'addRetur':
+        $db = getDB();
+        $db->beginTransaction();
+        try {
+            $noRetur = generateCode('RT', 'retur', 'no_retur', 6);
+            $stmt = $db->prepare("INSERT INTO retur (no_retur, type, ref_id, tanggal, keterangan, user_id) VALUES (:no, :type, :ref, :tgl, :ket, :uid)");
+            $stmt->execute(['no'=>$noRetur, 'type'=>$data['type'], 'ref'=>$data['ref_id'], 'tgl'=>$data['tanggal'] ?? date('Y-m-d'), 'ket'=>$data['keterangan'] ?? '', 'uid'=>$_SESSION['user_id'] ?? null]);
+            $returId = $db->lastInsertId();
+
+            if (!empty($data['items']) && is_array($data['items'])) {
+                $dt = $db->prepare("INSERT INTO retur_detail (retur_id, barang_id, qty, harga, subtotal) VALUES (:rt, :brg, :qty, :hrg, :sub)");
+                foreach ($data['items'] as $item) {
+                    $dt->execute(['rt'=>$returId, 'brg'=>$item['barang_id'], 'qty'=>$item['qty'], 'hrg'=>$item['harga'], 'sub'=>$item['subtotal'] ?? $item['qty'] * $item['harga']]);
+                    if ($data['type'] === 'penjualan') {
+                        $db->prepare("UPDATE barang SET stok = stok + :qty WHERE id = :id")->execute(['qty'=>$item['qty'], 'id'=>$item['barang_id']]);
+                    } else {
+                        $db->prepare("UPDATE barang SET stok = stok - :qty WHERE id = :id")->execute(['qty'=>$item['qty'], 'id'=>$item['barang_id']]);
+                    }
+                }
+            }
+            $db->commit();
+            jsonResponse(['status'=>'success','message'=>'Retur tersimpan','data'=>['id'=>$returId,'no_retur'=>$noRetur]]);
+        } catch (Exception $e) {
+            $db->rollBack();
+            jsonResponse(['status'=>'error','message'=>'Gagal: '.$e->getMessage()], 500);
+        }
+        break;
+
+    // ═══════════════════════════════════════
+    // LAPORAN (Fase 3)
+    // ═══════════════════════════════════════
+    case 'getLaporanPenjualan':
+        $db = getDB();
+        $start = $_GET['start'] ?? date('Y-m-01');
+        $end = $_GET['end'] ?? date('Y-m-d');
+        $stmt = $db->prepare("SELECT p.*, u.nama AS user_nama FROM penjualan p LEFT JOIN users u ON p.user_id = u.id WHERE p.tanggal BETWEEN :start AND :end ORDER BY p.tanggal DESC");
+        $stmt->execute(['start'=>$start, 'end'=>$end]);
+        $data_list = $stmt->fetchAll();
+        $total = array_sum(array_map(fn($r) => $r['grand_total'], $data_list));
+        jsonResponse(['status'=>'success','data'=>$data_list,'total'=>$total,'start'=>$start,'end'=>$end]);
+        break;
+
+    case 'getLaporanPembelian':
+        $db = getDB();
+        $start = $_GET['start'] ?? date('Y-m-01');
+        $end = $_GET['end'] ?? date('Y-m-d');
+        $stmt = $db->prepare("SELECT pb.*, sp.nama AS supplier_nama FROM pembelian pb LEFT JOIN supplier sp ON pb.supplier_id = sp.id WHERE pb.tanggal BETWEEN :start AND :end ORDER BY pb.tanggal DESC");
+        $stmt->execute(['start'=>$start, 'end'=>$end]);
+        $data_list = $stmt->fetchAll();
+        $total = array_sum(array_map(fn($r) => $r['grand_total'], $data_list));
+        jsonResponse(['status'=>'success','data'=>$data_list,'total'=>$total,'start'=>$start,'end'=>$end]);
+        break;
+
+    case 'getLaporanServis':
+        $db = getDB();
+        $start = $_GET['start'] ?? date('Y-m-01');
+        $end = $_GET['end'] ?? date('Y-m-d');
+        $stmt = $db->prepare("SELECT wo.*, plg.nama AS pelanggan_nama, mk.nama AS mekanik_nama FROM work_order wo LEFT JOIN pelanggan plg ON wo.pelanggan_id = plg.id LEFT JOIN mekanik mk ON wo.mekanik_id = mk.id WHERE DATE(wo.created_at) BETWEEN :start AND :end ORDER BY wo.created_at DESC");
+        $stmt->execute(['start'=>$start, 'end'=>$end]);
+        jsonResponse(['status'=>'success','data'=>$stmt->fetchAll()]);
+        break;
+
+    case 'getLaporanKeuangan':
+        $db = getDB();
+        $start = $_GET['start'] ?? date('Y-m-01');
+        $end = $_GET['end'] ?? date('Y-m-d');
+        
+        $stmt = $db->prepare("SELECT COALESCE(SUM(grand_total),0) AS total FROM penjualan WHERE tanggal BETWEEN :s AND :e");
+        $stmt->execute(['s'=>$start, 'e'=>$end]);
+        $penjualan = $stmt->fetch()['total'];
+        
+        $stmt = $db->prepare("SELECT COALESCE(SUM(grand_total),0) AS total FROM pembelian WHERE tanggal BETWEEN :s AND :e");
+        $stmt->execute(['s'=>$start, 'e'=>$end]);
+        $pembelian = $stmt->fetch()['total'];
+        
+        $stmt = $db->prepare("SELECT COALESCE(SUM(grand_total),0) AS total FROM work_order WHERE DATE(created_at) BETWEEN :s AND :e AND status_bayar = 'lunas'");
+        $stmt->execute(['s'=>$start, 'e'=>$end]);
+        $servis = $stmt->fetch()['total'];
+        
+        jsonResponse(['status'=>'success','data'=>[
+            'penjualan'=>$penjualan, 'pembelian'=>$pembelian, 'servis'=>$servis,
+            'laba_kotor'=>($penjualan + $servis) - $pembelian
+        ]]);
+        break;
+
+    // ═══════════════════════════════════════
+    // USER MANAGEMENT (Fase 5)
+    // ═══════════════════════════════════════
+    case 'addUser':
+        requireRole(['owner']);
+        $db = getDB();
+        $stmt = $db->prepare("INSERT INTO users (username, password, nama, role, status) VALUES (:user, MD5(:pass), :nama, :role, 'aktif')");
+        $stmt->execute(['user'=>$data['username'], 'pass'=>$data['password'], 'nama'=>$data['nama'], 'role'=>$data['role']]);
+        jsonResponse(['status'=>'success','message'=>'User berhasil ditambahkan']);
+        break;
+
+    case 'updateUser':
+        requireRole(['owner']);
+        $db = getDB();
+        $sql = "UPDATE users SET nama=:nama, role=:role, status=:status";
+        $params = ['id'=>$data['id'], 'nama'=>$data['nama'], 'role'=>$data['role'], 'status'=>$data['status'] ?? 'aktif'];
+        if (!empty($data['password'])) {
+            $sql .= ", password = MD5(:pass)";
+            $params['pass'] = $data['password'];
+        }
+        $sql .= " WHERE id=:id";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        jsonResponse(['status'=>'success','message'=>'User berhasil diupdate']);
+        break;
+
+    case 'deleteUser':
+        requireRole(['owner']);
+        $db = getDB();
+        $stmt = $db->prepare("DELETE FROM users WHERE id = :id AND id != 1");
+        $stmt->execute(['id'=>$data['id']]);
+        jsonResponse(['status'=>'success','message'=>'User berhasil dihapus']);
+        break;
+
     case 'getAppConfig':
         $db = getDB();
         $stmt = $db->query("SELECT * FROM app_config");
         $configs = [];
         foreach ($stmt->fetchAll() as $row) { $configs[$row['config_key']] = $row['config_value']; }
         jsonResponse(['status'=>'success','data'=>$configs]);
+        break;
+
+    case 'updateAppConfig':
+        requireRole(['owner','admin']);
+        $db = getDB();
+        foreach ($data as $key => $value) {
+            $stmt = $db->prepare("INSERT INTO app_config (config_key, config_value) VALUES (:k, :v) ON DUPLICATE KEY UPDATE config_value = :v2");
+            $stmt->execute(['k'=>$key, 'v'=>$value, 'v2'=>$value]);
+        }
+        jsonResponse(['status'=>'success','message'=>'Pengaturan berhasil disimpan']);
         break;
 
     // ═══════════════════════════════════════
