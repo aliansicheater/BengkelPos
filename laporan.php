@@ -14,7 +14,7 @@ requireRole(['owner','admin']);
 
     <!-- Date Filter -->
     <div class="card p-4 mb-4 animate-fade-in-up stagger-1">
-        <div class="flex flex-col sm:flex-row gap-3 items-end">
+        <div class="flex flex-col sm:flex-row gap-3 items-end flex-wrap">
             <div class="flex-1">
                 <label class="form-label text-sm">Dari Tanggal</label>
                 <input type="date" class="form-control" id="lap-start" value="<?= date('Y-m-01') ?>">
@@ -26,6 +26,17 @@ requireRole(['owner','admin']);
             <button onclick="loadAllLaporan()" class="btn btn-primary">
                 <i class="fas fa-sync mr-1"></i> Muat Laporan
             </button>
+            <div class="relative">
+                <button onclick="togglePdfDropdown()" class="btn" style="background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)">
+                    <i class="fas fa-file-pdf mr-1"></i> Export PDF
+                </button>
+                <div id="pdf-dropdown" class="hidden absolute right-0 mt-1 rounded-xl shadow-lg z-50 min-w-[160px]" style="background:#1e293b;border:1px solid rgba(148,163,184,0.2)">
+                    <a href="#" onclick="exportPDF('keuangan');return false" class="block px-4 py-2 text-sm hover:bg-white/10 transition-all" style="color:#94a3b8;border-radius:0.5rem 0.5rem 0 0">Keuangan</a>
+                    <a href="#" onclick="exportPDF('penjualan');return false" class="block px-4 py-2 text-sm hover:bg-white/10 transition-all" style="color:#94a3b8">Penjualan</a>
+                    <a href="#" onclick="exportPDF('pembelian');return false" class="block px-4 py-2 text-sm hover:bg-white/10 transition-all" style="color:#94a3b8">Pembelian</a>
+                    <a href="#" onclick="exportPDF('servis');return false" class="block px-4 py-2 text-sm hover:bg-white/10 transition-all" style="color:#94a3b8;border-radius:0 0 0.5rem 0.5rem">Servis</a>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -135,6 +146,26 @@ function switchTab(tab) {
     document.querySelectorAll('.laporan-content').forEach(el => el.style.display = 'none');
     document.getElementById('content-' + tab).style.display = 'block';
 }
+
+function togglePdfDropdown() {
+    document.getElementById('pdf-dropdown').classList.toggle('hidden');
+}
+
+function exportPDF(type) {
+    const start = document.getElementById('lap-start').value;
+    const end = document.getElementById('lap-end').value;
+    window.open(APP_URL + '/cetak/laporan_pdf.php?type=' + type + '&start=' + start + '&end=' + end, '_blank');
+    document.getElementById('pdf-dropdown').classList.add('hidden');
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('pdf-dropdown');
+    const btn = e.target.closest('.relative');
+    if (!btn || !btn.contains(e.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
 
 async function loadAllLaporan() {
     const start = document.getElementById('lap-start').value;
