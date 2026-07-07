@@ -76,7 +76,7 @@ switch ($action) {
         $offset = ($page - 1) * $limit;
 
         $db = getDB();
-        $where = $search ? "WHERE (b.nama LIKE '%$search%' OR b.kode_barang LIKE '%$search%' OR b.barcode LIKE '%$search%')" : '';
+        $where = $search ? "WHERE (b.nama LIKE '%$search%' OR b.kode_barang LIKE '%$search%' OR b.barcode LIKE '%$search%') AND b.status = 'aktif'" : "WHERE b.status = 'aktif'";
 
         $stmt = $db->query("SELECT COUNT(*) AS cnt FROM barang b $where");
         $total = $stmt->fetch()['cnt'];
@@ -137,9 +137,9 @@ switch ($action) {
     case 'getJasaServis':
         $db = getDB();
         $search = $_GET['search'] ?? ($data['search'] ?? '');
-        $sql = "SELECT * FROM jasa_servis";
+        $sql = "SELECT * FROM jasa_servis WHERE status = 'aktif'";
         $params = [];
-        if ($search) { $sql .= " WHERE nama LIKE :s OR kode_jasa LIKE :s"; $params['s'] = "%$search%"; }
+        if ($search) { $sql .= " AND (nama LIKE :s OR kode_jasa LIKE :s)"; $params['s'] = "%$search%"; }
         $sql .= " ORDER BY id DESC";
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
@@ -180,9 +180,9 @@ switch ($action) {
     case 'getSupplier':
         $db = getDB();
         $search = $_GET['search'] ?? ($data['search'] ?? '');
-        $sql = "SELECT * FROM supplier";
+        $sql = "SELECT * FROM supplier WHERE status = 'aktif'";
         $params = [];
-        if ($search) { $sql .= " WHERE nama LIKE :s OR alamat LIKE :s"; $params['s'] = "%$search%"; }
+        if ($search) { $sql .= " AND (nama LIKE :s OR alamat LIKE :s)"; $params['s'] = "%$search%"; }
         $sql .= " ORDER BY id DESC";
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
@@ -267,7 +267,7 @@ switch ($action) {
     // ═══════════════════════════════════════
     case 'getMekanik':
         $db = getDB();
-        $stmt = $db->query("SELECT * FROM mekanik ORDER BY id DESC");
+        $stmt = $db->query("SELECT * FROM mekanik WHERE status = 'aktif' ORDER BY id DESC");
         jsonResponse(['status'=>'success','data'=>$stmt->fetchAll()]);
         break;
 
@@ -316,31 +316,36 @@ switch ($action) {
         $db = getDB();
         $db->beginTransaction();
         try {
-            $kode = generateCode('PJ', 'penjualan', 'kode_penjualan', 6);
-            $stmt = $db->prepare("INSERT INTO penjualan (kode_penjualan, pelanggan_id, user_id, tanggal, subtotal, diskon, pajak, grand_total, metode_bayar, keterangan, status) VALUES (:kode, :pelanggan, :user, NOW(), :subtotal, :diskon, :pajak, :total, :bayar, :ket, :status)");
+            $noTrx = generateCode('PJ', 'penjualan', 'no_transaksi', 6);
+            $subtotal = $data['subtotal'] ?? 0;
+            $diskon = $data['diskon'] ?? 0;
+            $pajak = $data['pajak'] ?? 0;
+            $grandTotal = $subtotal - $diskon + $pajak;
+            $bayar = $data['bayar'] ?? 0;
+            $kembali = max(0, $bayar - $grandTotal);
+            $metodeBayar = $data['metode_bayar'] ?? 'tunai';
+            
+            $stmt = $db->prepare("INSERT INTO penjualan (no_transaksi, tanggal, subtotal, diskon, pajak, grand_total, bayar, kembali, metode_bayar, user_id) VALUES (:no, CURDATE(), :sub, :disk, :pajak, :gt, :bayar, :kembali, :metode, :uid)");
             $stmt->execute([
-                'kode'=>$kode, 'pelanggan'=>$data['pelanggan_id']??null, 'user'=>getCurrentUser()['id'],
-                'subtotal'=>$data['subtotal']??0, 'diskon'=>$data['diskon']??0, 'pajak'=>$data['pajak']??0,
-                'total'=>$data['grand_total']??0, 'bayar'=>$data['metode_bayar']??'tunai',
-                'ket'=>$data['keterangan']??'', 'status'=>$data['status']??'selesai'
+                'no'=>$noTrx, 'sub'=>$subtotal, 'disk'=>$diskon, 'pajak'=>$pajak,
+                'gt'=>$grandTotal, 'bayar'=>$bayar, 'kembali'=>$kembali,
+                'metode'=>$metodeBayar, 'uid'=>getCurrentUser()['id']
             ]);
             $penjualanId = $db->lastInsertId();
 
-            // Insert detail
             if (!empty($data['items']) && is_array($data['items'])) {
-                $dtl = $db->prepare("INSERT INTO penjualan_detail (penjualan_id, barang_id, qty, harga_satuan, subtotal) VALUES (:penjualan, :barang, :qty, :harga, :sub)");
+                $dtl = $db->prepare("INSERT INTO penjualan_detail (penjualan_id, barang_id, qty, harga, diskon, subtotal) VALUES (:pj, :brg, :qty, :hrg, :disk, :sub)");
                 foreach ($data['items'] as $item) {
                     $dtl->execute([
-                        'penjualan'=>$penjualanId, 'barang'=>$item['barang_id'], 'qty'=>$item['qty'],
-                        'harga'=>$item['harga_satuan'], 'sub'=>$item['subtotal']
+                        'pj'=>$penjualanId, 'brg'=>$item['barang_id'], 'qty'=>$item['qty'],
+                        'hrg'=>$item['harga'], 'disk'=>$item['diskon']??0, 'sub'=>$item['subtotal']
                     ]);
-                    // Kurangi stok
                     $db->prepare("UPDATE barang SET stok = stok - :qty WHERE id = :id")->execute(['qty'=>$item['qty'], 'id'=>$item['barang_id']]);
                 }
             }
 
             $db->commit();
-            jsonResponse(['status'=>'success','message'=>'Penjualan berhasil','data'=>['id'=>$penjualanId,'kode'=>$kode]]);
+            jsonResponse(['status'=>'success','message'=>'Penjualan berhasil','data'=>['id'=>$penjualanId,'no_transaksi'=>$noTrx,'grand_total'=>$grandTotal,'bayar'=>$bayar,'kembali'=>$kembali,'metode_bayar'=>$metodeBayar]]);
         } catch (Exception $e) {
             $db->rollBack();
             jsonResponse(['status'=>'error','message'=>'Gagal: '.$e->getMessage()], 500);
@@ -377,35 +382,41 @@ switch ($action) {
         $db = getDB();
         $db->beginTransaction();
         try {
-            $kode = generateCode('PB', 'pembelian', 'kode_pembelian', 6);
-            $stmt = $db->prepare("INSERT INTO pembelian (kode_pembelian, supplier_id, user_id, tanggal, subtotal, diskon, pajak, grand_total, metode_bayar, keterangan, status) VALUES (:kode, :supplier, :user, NOW(), :subtotal, :diskon, :pajak, :total, :bayar, :ket, :status)");
+            $noFaktur = generateCode('PB', 'pembelian', 'no_faktur', 6);
+            $subtotal = $data['subtotal'] ?? 0;
+            $diskon = $data['diskon'] ?? 0;
+            $pajak = $data['pajak'] ?? 0;
+            $grandTotal = $subtotal - $diskon + $pajak;
+            $metodeBayar = $data['metode_bayar'] ?? 'tunai';
+            $statusBayar = ($metodeBayar === 'kredit') ? 'belum' : 'lunas';
+            
+            $stmt = $db->prepare("INSERT INTO pembelian (no_faktur, supplier_id, tanggal, total, diskon, pajak, grand_total, status_bayar, jatuh_tempo, keterangan, user_id) VALUES (:no, :sup, CURDATE(), :tot, :disk, :pajak, :gt, :sb, :jt, :ket, :uid)");
             $stmt->execute([
-                'kode'=>$kode, 'supplier'=>$data['supplier_id']??null, 'user'=>getCurrentUser()['id'],
-                'subtotal'=>$data['subtotal']??0, 'diskon'=>$data['diskon']??0, 'pajak'=>$data['pajak']??0,
-                'total'=>$data['grand_total']??0, 'bayar'=>$data['metode_bayar']??'tunai',
-                'ket'=>$data['keterangan']??'', 'status'=>$data['status']??'diterima'
+                'no'=>$noFaktur, 'sup'=>$data['supplier_id']??null, 'tot'=>$subtotal,
+                'disk'=>$diskon, 'pajak'=>$pajak, 'gt'=>$grandTotal, 'sb'=>$statusBayar,
+                'jt'=>$data['jatuh_tempo']??null, 'ket'=>$data['keterangan']??'',
+                'uid'=>getCurrentUser()['id']
             ]);
             $pembelianId = $db->lastInsertId();
 
             if (!empty($data['items']) && is_array($data['items'])) {
-                $dtl = $db->prepare("INSERT INTO pembelian_detail (pembelian_id, barang_id, qty, harga_satuan, subtotal) VALUES (:pembelian, :barang, :qty, :harga, :sub)");
+                $dtl = $db->prepare("INSERT INTO pembelian_detail (pembelian_id, barang_id, qty, harga, diskon, subtotal) VALUES (:pb, :brg, :qty, :hrg, :disk, :sub)");
                 foreach ($data['items'] as $item) {
                     $dtl->execute([
-                        'pembelian'=>$pembelianId, 'barang'=>$item['barang_id'], 'qty'=>$item['qty'],
-                        'harga'=>$item['harga_satuan'], 'sub'=>$item['subtotal']
+                        'pb'=>$pembelianId, 'brg'=>$item['barang_id'], 'qty'=>$item['qty'],
+                        'hrg'=>$item['harga'], 'disk'=>$item['diskon']??0, 'sub'=>$item['subtotal']
                     ]);
                     $db->prepare("UPDATE barang SET stok = stok + :qty WHERE id = :id")->execute(['qty'=>$item['qty'], 'id'=>$item['barang_id']]);
                 }
             }
 
-            // Buat hutang jika kredit
-            if (($data['metode_bayar']??'') === 'kredit' && ($data['grand_total']??0) > 0) {
-                $db->prepare("INSERT INTO hutang_supplier (pembelian_id, supplier_id, total_hutang, sisa_hutang, status) VALUES (:pb,:sp,:total,:sisa,'belum_lunas')")
-                    ->execute(['pb'=>$pembelianId,'sp'=>$data['supplier_id']??null,'total'=>$data['grand_total'],'sisa'=>$data['grand_total']]);
+            if ($metodeBayar === 'kredit' && $grandTotal > 0) {
+                $db->prepare("INSERT INTO hutang_supplier (supplier_id, no_faktur, jumlah, terbayar, sisa_hutang, jatuh_tempo, status) VALUES (:sp, :nf, :jml, 0, :sisa, :jt, 'belum')")
+                    ->execute(['sp'=>$data['supplier_id']??null, 'nf'=>$noFaktur, 'jml'=>$grandTotal, 'sisa'=>$grandTotal, 'jt'=>$data['jatuh_tempo']??null]);
             }
 
             $db->commit();
-            jsonResponse(['status'=>'success','message'=>'Pembelian berhasil','data'=>['id'=>$pembelianId,'kode'=>$kode]]);
+            jsonResponse(['status'=>'success','message'=>'Pembelian berhasil','data'=>['id'=>$pembelianId,'no_faktur'=>$noFaktur,'grand_total'=>$grandTotal]]);
         } catch (Exception $e) {
             $db->rollBack();
             jsonResponse(['status'=>'error','message'=>'Gagal: '.$e->getMessage()], 500);
@@ -434,35 +445,37 @@ switch ($action) {
         $db = getDB();
         $db->beginTransaction();
         try {
-            $kode = generateCode('WO', 'work_order', 'kode_wo', 6);
-            $stmt = $db->prepare("INSERT INTO work_order (kode_wo, pelanggan_id, mekanik_id, plat_nomor, tipe_motor, keluhan, subtotal, diskon, grand_total, status, estimasi_selesai) VALUES (:kode,:pelanggan,:mekanik,:plat,:tipe,:keluhan,:subtotal,:diskon,:total,:status,:estimasi)");
+            $noWo = generateCode('WO', 'work_order', 'no_wo', 6);
+            $totalJasa = $data['total_jasa'] ?? 0;
+            $totalSparepart = $data['total_sparepart'] ?? 0;
+            $grandTotal = $totalJasa + $totalSparepart;
+            
+            $stmt = $db->prepare("INSERT INTO work_order (no_wo, pelanggan_id, plat_nomor, tipe_motor, km_sekarang, keluhan, diagnosa, mekanik_id, status, total_jasa, total_sparepart, grand_total, status_bayar) VALUES (:no, :plg, :plat, :tipe, :km, :kel, :diag, :mek, 'proses', :tj, :ts, :gt, 'belum')");
             $stmt->execute([
-                'kode'=>$kode, 'pelanggan'=>$data['pelanggan_id']??null, 'mekanik'=>$data['mekanik_id']??null,
-                'plat'=>$data['plat_nomor']??'', 'tipe'=>$data['tipe_motor']??'',
-                'keluhan'=>$data['keluhan']??'', 'subtotal'=>$data['subtotal']??0, 'diskon'=>$data['diskon']??0,
-                'total'=>$data['grand_total']??0, 'status'=>'proses', 'estimasi'=>$data['estimasi_selesai']??''
+                'no'=>$noWo, 'plg'=>$data['pelanggan_id']??null, 'plat'=>$data['plat_nomor']??'',
+                'tipe'=>$data['tipe_motor']??'', 'km'=>$data['km_sekarang']??0,
+                'kel'=>$data['keluhan']??'', 'diag'=>$data['diagnosa']??'',
+                'mek'=>$data['mekanik_id']??null, 'tj'=>$totalJasa, 'ts'=>$totalSparepart, 'gt'=>$grandTotal
             ]);
             $woId = $db->lastInsertId();
 
-            // Jasa servis
             if (!empty($data['jasa']) && is_array($data['jasa'])) {
-                $js = $db->prepare("INSERT INTO work_order_jasa (work_order_id, jasa_servis_id, harga, subtotal) VALUES (:wo,:jasa,:harga,:sub)");
+                $js = $db->prepare("INSERT INTO work_order_jasa (wo_id, jasa_id, harga, subtotal) VALUES (:wo, :jasa, :hrg, :sub)");
                 foreach ($data['jasa'] as $j) {
-                    $js->execute(['wo'=>$woId, 'jasa'=>$j['jasa_servis_id'], 'harga'=>$j['harga'], 'sub'=>$j['subtotal']??$j['harga']]);
+                    $js->execute(['wo'=>$woId, 'jasa'=>$j['jasa_id'], 'hrg'=>$j['harga'], 'sub'=>$j['subtotal']??$j['harga']]);
                 }
             }
 
-            // Sparepart
             if (!empty($data['sparepart']) && is_array($data['sparepart'])) {
-                $sp = $db->prepare("INSERT INTO work_order_sparepart (work_order_id, barang_id, qty, harga_satuan, subtotal) VALUES (:wo,:barang,:qty,:harga,:sub)");
+                $sp = $db->prepare("INSERT INTO work_order_sparepart (wo_id, barang_id, qty, harga, subtotal) VALUES (:wo, :brg, :qty, :hrg, :sub)");
                 foreach ($data['sparepart'] as $s) {
-                    $sp->execute(['wo'=>$woId, 'barang'=>$s['barang_id'], 'qty'=>$s['qty'], 'harga'=>$s['harga_satuan'], 'sub'=>$s['subtotal']]);
+                    $sp->execute(['wo'=>$woId, 'brg'=>$s['barang_id'], 'qty'=>$s['qty'], 'hrg'=>$s['harga'], 'sub'=>$s['subtotal']]);
                     $db->prepare("UPDATE barang SET stok = stok - :qty WHERE id = :id")->execute(['qty'=>$s['qty'], 'id'=>$s['barang_id']]);
                 }
             }
 
             $db->commit();
-            jsonResponse(['status'=>'success','message'=>'Work order dibuat','data'=>['id'=>$woId,'kode'=>$kode]]);
+            jsonResponse(['status'=>'success','message'=>'Work order dibuat','data'=>['id'=>$woId,'no_wo'=>$noWo,'grand_total'=>$grandTotal]]);
         } catch (Exception $e) {
             $db->rollBack();
             jsonResponse(['status'=>'error','message'=>'Gagal: '.$e->getMessage()], 500);
@@ -496,6 +509,13 @@ switch ($action) {
         jsonResponse(['status'=>'success','message'=>'Status work order diupdate']);
         break;
 
+    case 'updateWorkOrderBayar':
+        $db = getDB();
+        $stmt = $db->prepare("UPDATE work_order SET status_bayar = :status WHERE id = :id");
+        $stmt->execute(['id'=>$data['id'], 'status'=>$data['status'] ?? 'lunas']);
+        jsonResponse(['status'=>'success','message'=>'Status pembayaran diupdate']);
+        break;
+
     // ═══════════════════════════════════════
     // RIWAYAT SERVIS
     // ═══════════════════════════════════════
@@ -524,7 +544,7 @@ switch ($action) {
         $db = getDB();
         $id = $data['id'];
         $bayar = $data['jumlah'] ?? 0;
-        $stmt = $db->prepare("UPDATE hutang_supplier SET sisa_hutang = sisa_hutang - :bayar, status = IF(sisa_hutang - :bayar <= 0, 'lunas', 'belum_lunas') WHERE id = :id AND sisa_hutang >= :bayar");
+        $stmt = $db->prepare("UPDATE hutang_supplier SET terbayar = terbayar + :bayar, sisa_hutang = sisa_hutang - :bayar, status = IF(sisa_hutang - :bayar <= 0, 'lunas', IF(terbayar + :bayar > 0, 'cicilan', 'belum')) WHERE id = :id AND sisa_hutang >= :bayar");
         $stmt->execute(['id'=>$id, 'bayar'=>$bayar]);
         jsonResponse(['status'=>'success','message'=>'Pembayaran hutang tercatat']);
         break;
@@ -539,7 +559,7 @@ switch ($action) {
         $db = getDB();
         $id = $data['id'];
         $bayar = $data['jumlah'] ?? 0;
-        $stmt = $db->prepare("UPDATE piutang_pelanggan SET sisa_piutang = sisa_piutang - :bayar, status = IF(sisa_piutang - :bayar <= 0, 'lunas', 'belum_lunas') WHERE id = :id AND sisa_piutang >= :bayar");
+        $stmt = $db->prepare("UPDATE piutang_pelanggan SET terbayar = terbayar + :bayar, sisa_piutang = sisa_piutang - :bayar, status = IF(sisa_piutang - :bayar <= 0, 'lunas', IF(terbayar + :bayar > 0, 'cicilan', 'belum')) WHERE id = :id AND sisa_piutang >= :bayar");
         $stmt->execute(['id'=>$id, 'bayar'=>$bayar]);
         jsonResponse(['status'=>'success','message'=>'Pembayaran piutang tercatat']);
         break;
@@ -550,7 +570,7 @@ switch ($action) {
     case 'getUsers':
         requireRole(['owner','admin']);
         $db = getDB();
-        $stmt = $db->query("SELECT id, username, nama_lengkap, role, status FROM users ORDER BY id");
+        $stmt = $db->query("SELECT id, username, nama, role, status FROM users ORDER BY id");
         jsonResponse(['status'=>'success','data'=>$stmt->fetchAll()]);
         break;
 
@@ -560,6 +580,49 @@ switch ($action) {
         $configs = [];
         foreach ($stmt->fetchAll() as $row) { $configs[$row['config_key']] = $row['config_value']; }
         jsonResponse(['status'=>'success','data'=>$configs]);
+        break;
+
+    // ═══════════════════════════════════════
+    // SEARCH BARANG (flat result, for POS/Pembelian)
+    // ═══════════════════════════════════════
+    case 'searchBarang':
+        $db = getDB();
+        $search = $_GET['search'] ?? '';
+        $sql = "SELECT b.*, k.nama AS kategori_nama FROM barang b LEFT JOIN kategori_barang k ON b.kategori_id = k.id WHERE b.status = 'aktif'";
+        $params = [];
+        if ($search) {
+            $sql .= " AND (b.nama LIKE :s OR b.kode_barang LIKE :s OR b.barcode LIKE :s)";
+            $params['s'] = "%$search%";
+        }
+        $sql .= " ORDER BY b.nama ASC LIMIT 30";
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        jsonResponse(['status'=>'success','data'=>$stmt->fetchAll()]);
+        break;
+
+    // ═══════════════════════════════════════
+    // WORK ORDER DETAIL (with jasa + sparepart)
+    // ═══════════════════════════════════════
+    case 'getWorkOrderDetail':
+        $db = getDB();
+        $id = $_GET['id'] ?? ($data['id'] ?? 0);
+        
+        $stmt = $db->prepare("SELECT wo.*, plg.nama AS pelanggan_nama, plg.no_hp AS pelanggan_hp, mk.nama AS mekanik_nama FROM work_order wo LEFT JOIN pelanggan plg ON wo.pelanggan_id = plg.id LEFT JOIN mekanik mk ON wo.mekanik_id = mk.id WHERE wo.id = :id");
+        $stmt->execute(['id'=>$id]);
+        $wo = $stmt->fetch();
+        if (!$wo) { jsonResponse(['status'=>'error','message'=>'Work order tidak ditemukan'], 404); break; }
+        
+        // Get jasa list
+        $stmt = $db->prepare("SELECT wj.*, js.nama AS jasa_nama FROM work_order_jasa wj LEFT JOIN jasa_servis js ON wj.jasa_id = js.id WHERE wj.wo_id = :id");
+        $stmt->execute(['id'=>$id]);
+        $wo['jasa_list'] = $stmt->fetchAll();
+        
+        // Get sparepart list
+        $stmt = $db->prepare("SELECT ws.*, b.nama AS barang_nama, b.kode_barang FROM work_order_sparepart ws LEFT JOIN barang b ON ws.barang_id = b.id WHERE ws.wo_id = :id");
+        $stmt->execute(['id'=>$id]);
+        $wo['sparepart_list'] = $stmt->fetchAll();
+        
+        jsonResponse(['status'=>'success','data'=>$wo]);
         break;
 
     default:
