@@ -1,8 +1,8 @@
-<?php
+﻿<?php
 $page_title = 'Data Pelanggan';
 require_once __DIR__ . '/../config/database.php';
 
-// Proses Simpan / Edit / Hapus — BEFORE header
+// Proses Simpan / Edit / Hapus â€” BEFORE header
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $aksi = $_POST['aksi'] ?? '';
     $id = (int)($_POST['id'] ?? 0);
@@ -222,7 +222,7 @@ while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
 function riwayatPelanggan(id) {
     document.getElementById('riwayatContent').innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-slate-600"></i><p class="text-sm text-gray-400 mt-2">Memuat riwayat...</p></div>';
     openModal('modalRiwayat');
-    fetch('/Bengkel POS/ajax/riwayat_pelanggan.php?id=' + id)
+    fetch('/BengkelPOS/ajax/riwayat_pelanggan.php?id=' + id)
         .then(r => r.text())
         .then(html => {
             document.getElementById('riwayatContent').innerHTML = html;

@@ -1,7 +1,7 @@
-<?php
+﻿<?php
 session_start();
 if (isset($_SESSION['user_id'])) {
-    header('Location: /Bengkel POS/dashboard.php');
+    header('Location: /BengkelPOS/dashboard.php');
     exit;
 }
 
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             position: relative;
         }
 
-        /* SVG Doodle Background — mechanic theme, black & white */
+        /* SVG Doodle Background â€” mechanic theme, black & white */
         .doodle-bg {
             position: fixed;
             inset: 0;
@@ -191,7 +191,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         /* Dark mode */
-        @media (prefers-color-scheme: dark) {
+        body.dark-mode {
             body { background: #0F172A; }
             .doodle-svg { background: #0F172A; }
             .doodle-overlay { background: radial-gradient(ellipse at 30% 50%, transparent 0%, #0F172A 70%); }
@@ -218,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Logo -->
         <div class="text-center mb-8">
             <?php if ($app_logo): ?>
-                <img src="/Bengkel POS/uploads/<?= htmlspecialchars($app_logo) ?>" alt="Logo" class="h-20 w-20 mx-auto object-contain mb-4 float-anim">
+                <img src="/BengkelPOS/uploads/<?= htmlspecialchars($app_logo) ?>" alt="Logo" class="h-20 w-20 mx-auto object-contain mb-4 float-anim">
             <?php else: ?>
                 <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-slate-700 to-slate-900 rounded-2xl shadow-lg mb-4 float-anim">
                     <i class="fas fa-wrench text-white text-3xl"></i>
@@ -273,5 +273,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 
+
+    <script>
+    (function() {
+        const body = document.body;
+        const saved = localStorage.getItem('darkMode');
+        if (saved === 'true' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            body.classList.add('dark-mode');
+        }
+    })();
+    </script>
+
+    <script>
+    (function() {
+        const body = document.body;
+        const saved = localStorage.getItem('darkMode');
+        if (saved === 'true' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            body.classList.add('dark-mode');
+        }
+    })();
+    </script>
 </body>
 </html>

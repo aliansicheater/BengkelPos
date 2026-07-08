@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    BengkelPOS - Custom Styles
    Author: BengkelPOS Team
    ============================================================ */
@@ -76,8 +76,8 @@ body {
 :root {
     --bg-primary: #F8FAFC;
     --bg-card: #FFFFFF;
-    --bg-sidebar: #1E293B;
-    --bg-sidebar-end: #0F172A;
+    --bg-sidebar: #F8FAFC;
+    --bg-sidebar-end: #F1F5F9;
     --bg-topbar: #FFFFFF;
     --bg-input: #FFFFFF;
     --bg-hover: #F1F5F9;
@@ -85,6 +85,14 @@ body {
     --text-primary: #1E293B;
     --text-secondary: #475569;
     --text-muted: #64748B;
+    --text-sidebar: #475569;
+    --text-sidebar-hover: #1E293B;
+    --text-sidebar-active: #1E293B;
+    --text-sidebar-muted: #94A3B8;
+    --text-sidebar-label: rgba(71, 85, 105, 0.5);
+    --sidebar-active-bg: rgba(30, 41, 59, 0.08);
+    --sidebar-active-border: #1E293B;
+    --sidebar-border: #E2E8F0;
     --border-color: #E2E8F0;
     --border-light: #F1F5F9;
     --shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1);
@@ -107,6 +115,14 @@ body.dark-mode {
     --text-primary: #F1F5F9;
     --text-secondary: #CBD5E1;
     --text-muted: #94A3B8;
+    --text-sidebar: rgba(255,255,255,0.6);
+    --text-sidebar-hover: #FFFFFF;
+    --text-sidebar-active: #FFFFFF;
+    --text-sidebar-muted: #94A3B8;
+    --text-sidebar-label: rgba(255,255,255,0.35);
+    --sidebar-active-bg: rgba(255,255,255,0.1);
+    --sidebar-active-border: #64748B;
+    --sidebar-border: rgba(255,255,255,0.08);
     --border-color: #334155;
     --border-light: #334155;
     --shadow: 0 1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.3);
@@ -118,7 +134,7 @@ body.dark-mode {
 }
 
 .dark-mode .sidebar {
-    background: linear-gradient(180deg, #0B1121 0%, #0F172A 100%);
+    background: linear-gradient(180deg, var(--bg-sidebar) 0%, var(--bg-sidebar-end) 100%);
 }
 
 .dark-mode .stat-card,
@@ -244,7 +260,8 @@ body.dark-mode {
     left: 0;
     width: 260px;
     height: 100vh;
-    background: linear-gradient(180deg, #0F172A 0%, #1E1B4B 100%);
+    background: linear-gradient(180deg, var(--bg-sidebar) 0%, var(--bg-sidebar-end) 100%);
+    border-right: 1px solid var(--sidebar-border);
     z-index: 50;
     transition: transform 0.3s ease, width 0.3s ease;
     overflow-y: auto;
@@ -258,13 +275,13 @@ body.dark-mode {
     background: transparent;
 }
 .sidebar::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.2);
+    background: var(--text-sidebar-muted);
     border-radius: 10px;
 }
 
 .sidebar-logo {
     padding: 1.25rem;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid var(--sidebar-border);
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -273,25 +290,25 @@ body.dark-mode {
 .sidebar-logo-icon {
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, #1E293B, #0F172A);
+    background: var(--text-primary);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.25rem;
-    color: white;
+    color: var(--bg-card);
     flex-shrink: 0;
 }
 
 .sidebar-logo-text {
     font-size: 1.25rem;
     font-weight: 800;
-    color: white;
+    color: var(--text-primary);
     letter-spacing: -0.5px;
 }
 
 .sidebar-logo-text span {
-    color: #94A3B8;
+    color: var(--text-muted);
 }
 
 .sidebar-menu {
@@ -302,7 +319,7 @@ body.dark-mode {
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: rgba(255,255,255,0.35);
+    color: var(--text-sidebar-label);
     padding: 0.75rem 0.75rem 0.5rem;
     font-weight: 600;
 }
@@ -313,7 +330,7 @@ body.dark-mode {
     gap: 0.75rem;
     padding: 0.65rem 0.75rem;
     border-radius: 10px;
-    color: rgba(255,255,255,0.6);
+    color: var(--text-sidebar);
     text-decoration: none;
     font-size: 0.875rem;
     font-weight: 500;
@@ -330,8 +347,8 @@ body.dark-mode {
 }
 
 .sidebar-item:hover {
-    background: rgba(255,255,255,0.08);
-    color: white;
+    background: var(--sidebar-active-bg);
+    color: var(--text-sidebar-hover);
 }
 
 .sidebar-item:hover i {
@@ -339,8 +356,9 @@ body.dark-mode {
 }
 
 .sidebar-item.active {
-    background: rgba(255,255,255,0.1);
-    color: white;
+    background: var(--sidebar-active-bg);
+    color: var(--text-sidebar-active);
+    font-weight: 600;
 }
 
 .sidebar-item.active::before {
@@ -351,7 +369,7 @@ body.dark-mode {
     transform: translateY(-50%);
     width: 3px;
     height: 60%;
-    background: #64748B;
+    background: var(--sidebar-active-border);
     border-radius: 0 3px 3px 0;
 }
 
@@ -574,17 +592,17 @@ body.dark-mode {
     margin-top: 0.125rem;
 }
 
-.stat-card-slate .stat-card-icon { background: #F1F5F9; color: #1E293B; }
-.stat-card-slate::before { background: #1E293B; }
+.stat-card-slate .stat-card-icon { background: var(--bg-hover); color: var(--text-primary); }
+.stat-card-slate::before { background: var(--text-primary); }
 
-.stat-card-amber .stat-card-icon { background: #FFFBEB; color: #D97706; }
-.stat-card-amber::before { background: #F59E0B; }
+.stat-card-amber .stat-card-icon { background: var(--bg-hover); color: var(--text-primary); }
+.stat-card-amber::before { background: var(--text-muted); }
 
-.stat-card-green .stat-card-icon { background: #ECFDF5; color: #059669; }
-.stat-card-green::before { background: #10B981; }
+.stat-card-green .stat-card-icon { background: var(--bg-hover); color: var(--text-primary); }
+.stat-card-green::before { background: var(--text-secondary); }
 
-.stat-card-rose .stat-card-icon { background: #FFF1F2; color: #E11D48; }
-.stat-card-rose::before { background: #F43F5E; }
+.stat-card-rose .stat-card-icon { background: var(--bg-hover); color: var(--text-primary); }
+.stat-card-rose::before { background: var(--text-muted); }
 
 /* ============================================================
    CARDS (Content)
@@ -629,10 +647,10 @@ body.dark-mode {
     height: 6px;
 }
 .table-container::-webkit-scrollbar-track {
-    background: #F1F5F9;
+    background: var(--scrollbar-track);
 }
 .table-container::-webkit-scrollbar-thumb {
-    background: #CBD5E1;
+    background: var(--scrollbar-thumb);
     border-radius: 10px;
 }
 
@@ -643,22 +661,22 @@ table {
 }
 
 thead th {
-    background: #F8FAFC;
-    color: #475569;
+    background: var(--table-header);
+    color: var(--text-secondary);
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.688rem;
     letter-spacing: 0.05em;
     padding: 0.75rem 1rem;
     text-align: left;
-    border-bottom: 2px solid #E2E8F0;
+    border-bottom: 2px solid var(--border-color);
     white-space: nowrap;
 }
 
 tbody td {
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid #F1F5F9;
-    color: #334155;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
     vertical-align: middle;
 }
 
@@ -667,7 +685,7 @@ tbody tr {
 }
 
 tbody tr:hover {
-    background: #F8FAFC;
+    background: var(--table-hover);
 }
 
 tbody tr:last-child td {
@@ -797,22 +815,22 @@ tbody tr:last-child td {
 .form-control {
     width: 100%;
     padding: 0.625rem 0.875rem;
-    border: 1.5px solid #E2E8F0;
+    border: 1.5px solid var(--border-color);
     border-radius: 10px;
     font-size: 0.875rem;
-    color: #1E293B;
-    background: white;
+    color: var(--text-primary);
+    background: var(--bg-input);
     transition: all 0.2s ease;
     outline: none;
 }
 
 .form-control:focus {
-    border-color: #1E293B;
+    border-color: var(--text-primary);
     box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.15);
 }
 
 .form-control::placeholder {
-    color: #94A3B8;
+    color: var(--text-muted);
 }
 
 select.form-control {
@@ -860,7 +878,7 @@ textarea.form-control {
 
 .modal-content {
     position: relative;
-    background: white;
+    background: var(--bg-card);
     border-radius: 20px;
     max-width: 550px;
     width: 95%;
@@ -883,7 +901,7 @@ textarea.form-control {
 
 .modal-header {
     padding: 1.25rem 1.5rem;
-    border-bottom: 1px solid #E2E8F0;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -892,7 +910,7 @@ textarea.form-control {
 .modal-header h3 {
     font-size: 1.125rem;
     font-weight: 700;
-    color: #1E293B;
+    color: var(--text-primary);
 }
 
 .modal-close {
@@ -900,8 +918,8 @@ textarea.form-control {
     height: 32px;
     border-radius: 8px;
     border: none;
-    background: #F1F5F9;
-    color: #64748B;
+    background: var(--bg-hover);
+    color: var(--text-muted);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -911,8 +929,8 @@ textarea.form-control {
 }
 
 .modal-close:hover {
-    background: #E2E8F0;
-    color: #1E293B;
+    background: var(--border-color);
+    color: var(--text-primary);
 }
 
 .modal-body {
@@ -921,7 +939,7 @@ textarea.form-control {
 
 .modal-footer {
     padding: 1rem 1.5rem;
-    border-top: 1px solid #E2E8F0;
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem;
@@ -1013,10 +1031,10 @@ textarea.form-control {
     align-items: center;
     justify-content: space-between;
     padding: 0.625rem 0.75rem;
-    background: white;
+    background: var(--bg-card);
     border-radius: 10px;
     margin-bottom: 0.5rem;
-    border: 1px solid #E2E8F0;
+    border: 1px solid var(--border-color);
     transition: all 0.2s ease;
 }
 
@@ -1031,18 +1049,18 @@ textarea.form-control {
 
 .cart-item-name {
     font-weight: 600;
-    color: #1E293B;
+    color: var(--text-primary);
     font-size: 0.875rem;
 }
 
 .cart-item-price {
-    color: #64748B;
+    color: var(--text-muted);
     font-size: 0.813rem;
 }
 
 .cart-item-subtotal {
     font-weight: 700;
-    color: #1E293B;
+    color: var(--text-primary);
     font-size: 0.938rem;
 }
 
@@ -1051,20 +1069,20 @@ textarea.form-control {
     justify-content: space-between;
     align-items: center;
     padding: 1rem 0.75rem 0;
-    border-top: 2px solid #E2E8F0;
+    border-top: 2px solid var(--border-color);
     margin-top: 0.5rem;
 }
 
 .cart-total-label {
     font-size: 1.125rem;
     font-weight: 600;
-    color: #1E293B;
+    color: var(--text-primary);
 }
 
 .cart-total-value {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #1E293B;
+    color: var(--text-primary);
 }
 
 /* ============================================================
@@ -1277,3 +1295,71 @@ textarea.form-control {
         background: white !important;
     }
 }
+
+/* ============================================================
+   DARK MODE: Tailwind Class Overrides
+   ============================================================ */
+.dark-mode .text-slate-700 { color: #CBD5E1 !important; }
+.dark-mode .text-slate-600 { color: #CBD5E1 !important; }
+.dark-mode .text-slate-500 { color: #94A3B8 !important; }
+.dark-mode .text-gray-900 { color: #F1F5F9 !important; }
+.dark-mode .text-gray-800 { color: #F1F5F9 !important; }
+.dark-mode .text-gray-700 { color: #CBD5E1 !important; }
+.dark-mode .text-gray-600 { color: #CBD5E1 !important; }
+.dark-mode .text-gray-500 { color: #94A3B8 !important; }
+.dark-mode .text-gray-400 { color: #94A3B8 !important; }
+.dark-mode .text-gray-300 { color: #64748B !important; }
+.dark-mode .bg-gray-50 { background: #1E293B !important; }
+.dark-mode .bg-gray-100 { background: #1E293B !important; }
+.dark-mode .bg-slate-50 { background: #1E293B !important; }
+.dark-mode .bg-slate-100 { background: #1E293B !important; }
+.dark-mode .bg-white { background: #1E293B !important; }
+.dark-mode .bg-amber-50 { background: rgba(245, 158, 11, 0.1) !important; }
+.dark-mode .bg-gradient-to-br.from-slate-200 { background: linear-gradient(to bottom right, #334155, #1E293B) !important; }
+.dark-mode .border-gray-200 { border-color: #334155 !important; }
+.dark-mode .text-amber-500 { color: #CBD5E1 !important; }
+.dark-mode .text-amber-400 { color: #94A3B8 !important; }
+.dark-mode .text-green-500,
+.dark-mode .text-emerald-500 { color: #CBD5E1 !important; }
+.dark-mode .text-red-400 { color: #FCA5A5 !important; }
+.dark-mode .text-red-500 { color: #FCA5A5 !important; }
+.dark-mode label { color: #CBD5E1; }
+.dark-mode select.form-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394A3B8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+}
+.dark-mode .content-card-header h3,
+.dark-mode .page-header h1 { color: var(--text-primary); }
+
+/* ============================================================
+   DARK MODE: Tailwind Class Overrides
+   ============================================================ */
+.dark-mode .text-slate-700 { color: #CBD5E1 !important; }
+.dark-mode .text-slate-600 { color: #CBD5E1 !important; }
+.dark-mode .text-slate-500 { color: #94A3B8 !important; }
+.dark-mode .text-gray-900 { color: #F1F5F9 !important; }
+.dark-mode .text-gray-800 { color: #F1F5F9 !important; }
+.dark-mode .text-gray-700 { color: #CBD5E1 !important; }
+.dark-mode .text-gray-600 { color: #CBD5E1 !important; }
+.dark-mode .text-gray-500 { color: #94A3B8 !important; }
+.dark-mode .text-gray-400 { color: #94A3B8 !important; }
+.dark-mode .text-gray-300 { color: #64748B !important; }
+.dark-mode .bg-gray-50 { background: #1E293B !important; }
+.dark-mode .bg-gray-100 { background: #1E293B !important; }
+.dark-mode .bg-slate-50 { background: #1E293B !important; }
+.dark-mode .bg-slate-100 { background: #1E293B !important; }
+.dark-mode .bg-white { background: #1E293B !important; }
+.dark-mode .bg-amber-50 { background: rgba(245, 158, 11, 0.1) !important; }
+.dark-mode .bg-gradient-to-br.from-slate-200 { background: linear-gradient(to bottom right, #334155, #1E293B) !important; }
+.dark-mode .border-gray-200 { border-color: #334155 !important; }
+.dark-mode .text-amber-500 { color: #CBD5E1 !important; }
+.dark-mode .text-amber-400 { color: #94A3B8 !important; }
+.dark-mode .text-green-500,
+.dark-mode .text-emerald-500 { color: #CBD5E1 !important; }
+.dark-mode .text-red-400 { color: #FCA5A5 !important; }
+.dark-mode .text-red-500 { color: #FCA5A5 !important; }
+.dark-mode label { color: #CBD5E1; }
+.dark-mode select.form-control {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394A3B8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+}
+.dark-mode .content-card-header h3,
+.dark-mode .page-header h1 { color: var(--text-primary); }
