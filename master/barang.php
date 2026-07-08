@@ -1,360 +1,315 @@
 <?php
-$pageTitle = 'Data Barang';
+$page_title = 'Data Barang';
+require_once __DIR__ . '/../config/database.php';
+
+// Proses Simpan / Edit / Hapus — BEFORE header to avoid header() already sent
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $aksi = $_POST['aksi'] ?? '';
+    $id = (int)($_POST['id'] ?? 0);
+
+    if ($aksi === 'hapus' && $id) {
+        mysqli_query($conn, "DELETE FROM barang WHERE id=$id");
+        $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Barang berhasil dihapus!'];
+    } elseif ($aksi === 'tambah' || $aksi === 'edit') {
+        $kode_barang = mysqli_real_escape_string($conn, $_POST['kode_barang'] ?? '');
+        $nama_barang = mysqli_real_escape_string($conn, $_POST['nama_barang'] ?? '');
+        $id_kategori = (int)($_POST['id_kategori'] ?? 0);
+        $harga_beli = str_replace('.', '', $_POST['harga_beli'] ?? '0');
+        $harga_jual = str_replace('.', '', $_POST['harga_jual'] ?? '0');
+        $stok = (int)($_POST['stok'] ?? 0);
+        $stok_minimal = (int)($_POST['stok_minimal'] ?? 5);
+
+        if ($aksi === 'tambah') {
+            $q = "INSERT INTO barang (kode_barang, nama_barang, id_kategori, harga_beli, harga_jual, stok, stok_minimal) 
+                  VALUES ('$kode_barang', '$nama_barang', $id_kategori, $harga_beli, $harga_jual, $stok, $stok_minimal)";
+            mysqli_query($conn, $q);
+            $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Barang berhasil ditambahkan!'];
+        } elseif ($id) {
+            $q = "UPDATE barang SET 
+                  kode_barang='$kode_barang', nama_barang='$nama_barang', id_kategori=$id_kategori,
+                  harga_beli=$harga_beli, harga_jual=$harga_jual, stok=$stok, stok_minimal=$stok_minimal
+                  WHERE id=$id";
+            mysqli_query($conn, $q);
+            $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Barang berhasil diupdate!'];
+        }
+    }
+    header('Location: barang.php');
+    exit;
+}
+
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../config/auth.php';
-requireRole(['owner','admin','gudang']);
+
+// Ambil data
+$q_barang = mysqli_query($conn, "SELECT b.*, k.nama_kategori FROM barang b 
+                                 LEFT JOIN kategori k ON b.id_kategori = k.id 
+                                 ORDER BY b.nama_barang ASC");
+$q_kategori = mysqli_query($conn, "SELECT * FROM kategori ORDER BY nama_kategori ASC");
+
+// Stats
+$total_item = mysqli_num_rows($q_barang);
+$total_stok = 0; $total_nilai = 0; $stok_menipis = 0;
+$barang_list = [];
+while($b = mysqli_fetch_assoc($q_barang)) { 
+    $barang_list[] = $b; 
+    $total_stok += $b['stok'];
+    $total_nilai += $b['harga_beli'] * $b['stok'];
+    if ($b['stok'] <= $b['stok_minimal']) $stok_menipis++;
+}
+$q_kategori->data_seek(0);
+
+$flash = $_SESSION['flash'] ?? null;
+unset($_SESSION['flash']);
 ?>
 
-<!-- Page Header -->
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 animate-fade-in-up">
+<div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1 class="h4 font-bold" style="color:#f1f5f9"><i class="fas fa-boxes mr-2" style="color:#0ea5e9"></i>Data Barang</h1>
-        <small style="color:#64748b">Kelola stok barang dan sparepart bengkel</small>
+        <h1><i class="fas fa-boxes-stacked text-indigo-600 mr-2"></i>Data Barang</h1>
+        <p>Kelola stok, harga, dan kategori sparepart & aksesoris</p>
     </div>
-    <button class="btn btn-primary mt-2 mt-md-0" onclick="openForm()">
-        <i class="fas fa-plus mr-1"></i> Tambah Barang
+    <button onclick="openModal('modalBarang')" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Tambah Barang
     </button>
 </div>
 
-<!-- Search & Filter -->
-<div class="card mb-4 animate-fade-in-up" style="animation-delay:0.1s;opacity:0">
-    <div class="card-body p-3">
-        <div class="row align-items-center">
-            <div class="col-md-6 mb-2 mb-md-0">
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);border-radius:0.75rem 0 0 0.75rem;color:#64748b"><i class="fas fa-search"></i></span>
-                    </div>
-                    <input type="text" class="form-control" id="search-input" placeholder="Cari kode, nama, atau barcode..." oninput="loadBarang(1, this.value)" style="border-radius:0 0.75rem 0.75rem 0">
-                </div>
-            </div>
-            <div class="col-md-3 mb-2 mb-md-0">
-                <select class="form-control" id="filter-kategori" onchange="loadBarang(1, document.getElementById('search-input').value)">
-                    <option value="">Semua Kategori</option>
-                </select>
-            </div>
-            <div class="col-md-3 text-md-right">
-                <button class="btn btn-secondary btn-sm" onclick="loadBarang(1)"><i class="fas fa-sync mr-1"></i> Refresh</button>
-            </div>
-        </div>
+<!-- Stats Row -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+    <div class="stat-card stat-card-indigo">
+        <div class="stat-card-icon"><i class="fas fa-box"></i></div>
+        <div class="stat-card-value"><?= $total_item ?></div>
+        <div class="stat-card-label">Total Item</div>
+    </div>
+    <div class="stat-card stat-card-amber">
+        <div class="stat-card-icon"><i class="fas fa-warehouse"></i></div>
+        <div class="stat-card-value"><?= $total_stok ?></div>
+        <div class="stat-card-label">Total Stok</div>
+    </div>
+    <div class="stat-card stat-card-green">
+        <div class="stat-card-icon"><i class="fas fa-coins"></i></div>
+        <div class="stat-card-value"><?= rupiah($total_nilai) ?></div>
+        <div class="stat-card-label">Nilai Modal</div>
+    </div>
+    <div class="stat-card stat-card-rose">
+        <div class="stat-card-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-card-value"><?= $stok_menipis ?></div>
+        <div class="stat-card-label">Stok Menipis</div>
     </div>
 </div>
 
-<!-- Data Table -->
-<div class="card animate-fade-in-up" style="animation-delay:0.2s;opacity:0">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0" id="tabel-barang">
+<?php if ($flash): ?>
+<div class="alert alert-<?= $flash['type'] ?> animate-slide-down">
+    <i class="fas fa-<?= $flash['type'] == 'success' ? 'check-circle' : 'exclamation-circle' ?>"></i>
+    <?= $flash['msg'] ?>
+</div>
+<?php endif; ?>
+
+<div class="content-card">
+    <div class="content-card-header">
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+            <i class="fas fa-search text-gray-400"></i>
+            <input type="text" id="searchInput" placeholder="Cari nama/kode barang..." class="form-control py-2 px-3 w-full sm:w-64">
+        </div>
+        <span class="text-sm text-gray-400">Total: <strong><?= $total_item ?></strong> barang</span>
+    </div>
+    <div class="content-card-body p-0">
+        <div class="table-container">
+            <table id="dataTable">
                 <thead>
                     <tr>
-                        <th style="width:50px">No</th>
-                        <th>Kode / Barcode</th>
+                        <th style="width:45px">#</th>
                         <th>Nama Barang</th>
                         <th>Kategori</th>
+                        <th>Harga Beli</th>
                         <th>Harga Jual</th>
+                        <th>Margin</th>
                         <th>Stok</th>
-                        <th>Status</th>
-                        <th style="width:120px">Aksi</th>
+                        <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody id="data-container">
-                    <tr><td colspan="8" class="text-center py-5" style="color:#64748b"><i class="fas fa-spinner fa-spin mr-2"></i>Memuat data...</td></tr>
+                <tbody>
+                    <?php if (count($barang_list) > 0): ?>
+                        <?php $no = 1; foreach($barang_list as $b): 
+                            $margin = $b['harga_jual'] - $b['harga_beli'];
+                            $margin_persen = $b['harga_beli'] > 0 ? round(($margin / $b['harga_beli']) * 100) : 0;
+                            $stok_class = $b['stok'] <= 0 ? 'danger' : ($b['stok'] <= $b['stok_minimal'] ? 'warning' : 'success');
+                        ?>
+                        <tr>
+                            <td class="text-gray-400 text-xs"><?= $no++ ?></td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center text-indigo-500 text-xs font-bold flex-shrink-0">
+                                        <i class="fas fa-box"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-sm"><?= htmlspecialchars($b['nama_barang']) ?></div>
+                                        <span class="text-[10px] font-mono text-gray-400"><?= htmlspecialchars($b['kode_barang']) ?></span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge badge-info text-[10px]"><?= htmlspecialchars($b['nama_kategori'] ?? '-') ?></span></td>
+                            <td class="text-gray-500 text-xs"><?= rupiah($b['harga_beli']) ?></td>
+                            <td class="font-semibold text-indigo-600 text-sm"><?= rupiah($b['harga_jual']) ?></td>
+                            <td>
+                                <span class="badge <?= $margin > 0 ? 'badge-success' : 'badge-danger' ?> text-[10px]">
+                                    <?= rupiah($margin) ?> (<?= $margin_persen ?>%)
+                                </span>
+                            </td>
+                            <td>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-16 h-1.5 rounded-full bg-gray-200 overflow-hidden">
+                                        <div class="h-full rounded-full transition-all <?= $stok_class == 'danger' ? 'bg-red-500' : ($stok_class == 'warning' ? 'bg-amber-500' : 'bg-emerald-500') ?>" 
+                                             style="width: <?= min(100, ($b['stok'] / max($b['stok_minimal'], 1)) * 50) ?>%"></div>
+                                    </div>
+                                    <span class="badge badge-<?= $stok_class ?> text-[10px] font-semibold"><?= $b['stok'] ?></span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="flex gap-1 justify-center">
+                                    <button onclick='editBarang(<?= json_encode($b) ?>)' class="btn btn-sm btn-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <form method="POST" style="display:inline" onsubmit="return confirm('Hapus barang <?= htmlspecialchars($b['nama_barang']) ?>?')">
+                                        <input type="hidden" name="aksi" value="hapus">
+                                        <input type="hidden" name="id" value="<?= $b['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Hapus">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="8" class="text-center py-16">
+                                <div class="inline-flex flex-col items-center">
+                                    <div class="w-20 h-20 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
+                                        <i class="fas fa-box-open text-3xl text-indigo-300"></i>
+                                    </div>
+                                    <h3 class="font-semibold text-gray-400 mb-1">Belum Ada Barang</h3>
+                                    <p class="text-sm text-gray-400 mb-4">Klik "Tambah Barang" untuk mulai menambahkan sparepart</p>
+                                    <button onclick="openModal('modalBarang')" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus"></i> Tambah Barang Pertama
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
-    <div class="card-footer" id="pagination-container" style="background:transparent;border-top:1px solid rgba(255,255,255,0.05)">
-    </div>
 </div>
 
-<!-- Modal Form -->
-<div class="modal fade" id="formModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modal-title"><i class="fas fa-box mr-2" style="color:#0ea5e9"></i>Tambah Barang</h5>
-                <button type="button" class="close" data-dismiss="modal"><span style="color:#94a3b8">&times;</span></button>
-            </div>
+<!-- Modal Tambah/Edit Barang -->
+<div class="modal" id="modalBarang">
+    <div class="modal-backdrop" onclick="closeModal('modalBarang')"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalBarangTitle"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah Barang</h3>
+            <button class="modal-close" onclick="closeModal('modalBarang')"><i class="fas fa-times"></i></button>
+        </div>
+        <form method="POST">
             <div class="modal-body">
-                <form id="data-form" onsubmit="event.preventDefault(); saveBarang()">
-                    <input type="hidden" name="id" id="form-id">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label font-semibold" style="font-size:0.8rem">Kode Barang</label>
-                                <input type="text" class="form-control" name="kode_barang" id="form-kode" readonly style="background:rgba(255,255,255,0.02) !important;color:#64748b !important">
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label font-semibold" style="font-size:0.8rem">Barcode</label>
-                                <div class="input-group">
-                                    <input type="text" class="form-control" name="barcode" id="form-barcode" placeholder="Scan atau ketik manual">
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn btn-secondary" onclick="openCameraScanner()" title="Scan dari kamera">
-                                            <i class="fas fa-camera"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                <input type="hidden" name="aksi" id="formAksi" value="tambah">
+                <input type="hidden" name="id" id="formId" value="0">
+
+                <div class="form-row grid-cols-2">
+                    <div class="form-group">
+                        <label class="form-label">Kode Barang <span class="text-red-400">*</span></label>
+                        <input type="text" name="kode_barang" id="formKode" class="form-control" required
+                               placeholder="Contoh: BRG001">
                     </div>
                     <div class="form-group">
-                        <label class="form-label font-semibold" style="font-size:0.8rem">Nama Barang <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="nama" id="form-nama" required placeholder="Contoh: Oli MPX 10W-40">
+                        <label class="form-label">Kategori <span class="text-red-400">*</span></label>
+                        <select name="id_kategori" id="formKategori" class="form-control" required>
+                            <option value="">-- Pilih --</option>
+                            <?php while($k = mysqli_fetch_assoc($q_kategori)): ?>
+                            <option value="<?= $k['id'] ?>"><?= htmlspecialchars($k['nama_kategori']) ?></option>
+                            <?php endwhile; ?>
+                        </select>
                     </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label font-semibold" style="font-size:0.8rem">Kategori</label>
-                                <select class="form-control form-select" name="kategori_id" id="form-kategori">
-                                    <option value="">-- Pilih --</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label font-semibold" style="font-size:0.8rem">Merk</label>
-                                <input type="text" class="form-control" name="merk" id="form-merk" placeholder="Contoh: AHM, NGK">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label font-semibold" style="font-size:0.8rem">Satuan</label>
-                                <select class="form-control form-select" name="satuan" id="form-satuan">
-                                    <option value="Pcs">Pcs</option>
-                                    <option value="Botol">Botol</option>
-                                    <option value="Liter">Liter</option>
-                                    <option value="Set">Set</option>
-                                    <option value="Unit">Unit</option>
-                                    <option value="Roll">Roll</option>
-                                    <option value="Meter">Meter</option>
-                                </select>
-                            </div>
-                        </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nama Barang <span class="text-red-400">*</span></label>
+                    <input type="text" name="nama_barang" id="formNama" class="form-control" required
+                           placeholder="Nama barang / sparepart">
+                </div>
+                <div class="form-row grid-cols-2">
+                    <div class="form-group">
+                        <label class="form-label">Harga Beli (Rp) <i class="fas fa-info-circle text-gray-300 ml-1" title="Modal awal"></i></label>
+                        <input type="text" name="harga_beli" id="formHargaBeli" class="form-control input-rupiah" required placeholder="0">
                     </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label font-semibold" style="font-size:0.8rem">Harga Modal (Rp)</label>
-                                <input type="number" class="form-control" name="harga_modal" id="form-harga_modal" min="0" value="0">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label font-semibold" style="font-size:0.8rem">Harga Jual (Rp) <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" name="harga_jual" id="form-harga_jual" min="0" value="0" required>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label font-semibold" style="font-size:0.8rem">Lokasi Rak</label>
-                                <input type="text" class="form-control" name="lokasi_rak" id="form-lokasi_rak" placeholder="Contoh: A-01">
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Harga Jual (Rp) <span class="text-red-400">*</span></label>
+                        <input type="text" name="harga_jual" id="formHargaJual" class="form-control input-rupiah" required placeholder="0">
                     </div>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label font-semibold" style="font-size:0.8rem">Stok Saat Ini</label>
-                                <input type="number" class="form-control" name="stok" id="form-stok" min="0" value="0">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label font-semibold" style="font-size:0.8rem">Minimum Stok</label>
-                                <input type="number" class="form-control" name="stok_minimum" id="form-stok_minimum" min="0" value="5">
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label class="form-label font-semibold" style="font-size:0.8rem">Status</label>
-                                <select class="form-control form-select" name="status" id="form-status">
-                                    <option value="aktif">Aktif</option>
-                                    <option value="nonaktif">Non Aktif</option>
-                                </select>
-                            </div>
-                        </div>
+                </div>
+                <div class="form-row grid-cols-2">
+                    <div class="form-group">
+                        <label class="form-label">Stok Awal</label>
+                        <input type="number" name="stok" id="formStok" class="form-control" required value="0" min="0">
                     </div>
-                </form>
+                    <div class="form-group">
+                        <label class="form-label">Stok Minimal <i class="fas fa-info-circle text-gray-300 ml-1" title="Peringatan saat stok di bawah nilai ini"></i></label>
+                        <input type="number" name="stok_minimal" id="formStokMin" class="form-control" required value="5" min="1">
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i> Batal</button>
-                <button type="button" class="btn btn-primary" onclick="saveBarang()"><i class="fas fa-save mr-1"></i> Simpan</button>
+                <button type="button" class="btn btn-outline" onclick="closeModal('modalBarang')">Batal</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> <span id="btnSimpanText">Simpan</span>
+                </button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
-<!-- Scanner Modal -->
-<div class="modal fade" id="scannerModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-camera mr-2" style="color:#0ea5e9"></i>Scan Barcode</h5>
-                <button type="button" class="close" data-dismiss="modal" onclick="stopScanner()"><span style="color:#94a3b8">&times;</span></button>
-            </div>
-            <div class="modal-body text-center">
-                <div id="scanner-reader" style="border-radius:0.75rem;overflow:hidden"></div>
-                <p class="mt-3" style="color:#64748b;font-size:0.85rem">Arahkan kamera ke barcode barang</p>
-            </div>
-        </div>
-    </div>
-</div>
+<script>
+function editBarang(data) {
+    document.getElementById('modalBarangTitle').innerHTML = '<i class="fas fa-edit text-amber-500 mr-2"></i>Edit Barang';
+    document.getElementById('formAksi').value = 'edit';
+    document.getElementById('formId').value = data.id;
+    document.getElementById('formKode').value = data.kode_barang;
+    document.getElementById('formNama').value = data.nama_barang;
+    document.getElementById('formKategori').value = data.id_kategori;
+    document.getElementById('formHargaBeli').value = parseInt(data.harga_beli).toLocaleString('id-ID');
+    document.getElementById('formHargaJual').value = parseInt(data.harga_jual).toLocaleString('id-ID');
+    document.getElementById('formStok').value = data.stok;
+    document.getElementById('formStokMin').value = data.stok_minimal;
+    document.getElementById('btnSimpanText').textContent = 'Update';
+    openModal('modalBarang');
+}
 
-<!-- Barcode Print Modal -->
-<div class="modal fade" id="barcodePrintModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-print mr-2" style="color:#0ea5e9"></i>Cetak Label Barcode</h5>
-                <button type="button" class="close" data-dismiss="modal"><span style="color:#94a3b8">&times;</span></button>
-            </div>
-            <div class="modal-body text-center" id="barcode-preview"></div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                <button class="btn btn-primary" onclick="printBarcode()"><i class="fas fa-print mr-1"></i> Cetak</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php $extraScripts = '
-let lastScanCode = "";
-
-async function loadKategori() {
-    const res = await apiRequest("getKategoriBarang", {}, "GET");
-    if (res.status === "success" && res.data) {
-        const sel = document.getElementById("filter-kategori");
-        const fsel = document.getElementById("form-kategori");
-        res.data.forEach(k => {
-            sel.innerHTML += `<option value="${k.id}">${k.nama}</option>`;
-            fsel.innerHTML += `<option value="${k.id}">${k.nama}</option>`;
-        });
+// Reset modal when closed
+document.getElementById('modalBarang').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeModal('modalBarang');
+        setTimeout(resetModalBarang, 300);
     }
+});
+
+function resetModalBarang() {
+    document.getElementById('modalBarangTitle').innerHTML = '<i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah Barang';
+    document.getElementById('formAksi').value = 'tambah';
+    document.getElementById('formId').value = '0';
+    document.getElementById('formKode').value = '';
+    document.getElementById('formNama').value = '';
+    document.getElementById('formKategori').value = '';
+    document.getElementById('formHargaBeli').value = '';
+    document.getElementById('formHargaJual').value = '';
+    document.getElementById('formStok').value = '0';
+    document.getElementById('formStokMin').value = '5';
+    document.getElementById('btnSimpanText').textContent = 'Simpan';
 }
 
-async function loadBarang(page = 1, search = "") {
-    const c = document.getElementById("data-container");
-    c.innerHTML = Array(5).fill("").map(() => `<tr><td colspan="8"><div class="d-flex align-items-center p-3"><div class="skeleton" style="width:40px;height:40px;border-radius:0.5rem"></div><div class="ml-3 flex-grow-1"><div class="skeleton mb-1" style="height:12px;width:30%"></div><div class="skeleton" style="height:10px;width:50%"></div></div></div></td></tr>`).join("");
-    
-    const res = await apiRequest(`getBarang?page=${page}&limit=10&search=${encodeURIComponent(search)}`, {}, "GET");
-    
-    if (res.status === "success" && res.data && res.data.length > 0) {
-        let html = "";
-        res.data.forEach((b, i) => {
-            const sk = b.stok <= b.stok_minimum ? "text-warning font-bold" : "";
-            const sb = b.stok <= b.stok_minimum ? `<span class="badge badge-warning ml-1" style="font-size:0.65rem"><i class="fas fa-exclamation-triangle mr-1"></i>Min</span>` : "";
-            html += `<tr style="animation:fadeInUp 0.3s ease forwards;opacity:0;animation-delay:${i*0.03}s">
-                <td>${(res.pagination.page-1)*res.pagination.limit+i+1}</td>
-                <td><div class="d-flex align-items-center"><div id="bc-${b.id}" class="mr-2" style="cursor:pointer" onclick="previewBarcode(\\x27${b.kode_barang}\\x27,\\x27${b.nama.replace(/'/g,"\\'")}\\x27)" title="Cetak label"></div><div><span class="font-semibold" style="color:#0ea5e9;font-size:0.8rem">${b.kode_barang}</span>${b.barcode?`<br><small style="color:#64748b">${b.barcode}</small>`:""}</div></div></td>
-                <td><div class="font-semibold">${b.nama}</div>${b.merk?`<small style="color:#64748b">${b.merk}</small>`:""}</td>
-                <td><span class="badge badge-info">${b.kategori_nama||"-"}</span></td>
-                <td class="font-bold">${formatRupiah(b.harga_jual)}</td>
-                <td><span class="${sk}">${b.stok} ${b.satuan}</span>${sb}</td>
-                <td>${b.status==="aktif"?`<span class="badge badge-success">Aktif</span>`:`<span class="badge badge-danger">Non Aktif</span>`}</td>
-                <td><div class="btn-group btn-group-sm"><button class="btn btn-secondary" onclick="editBarang(${b.id})" title="Edit"><i class="fas fa-edit"></i></button><button class="btn btn-secondary" onclick="deleteBarang(${b.id})" title="Hapus" style="color:#ef4444"><i class="fas fa-trash"></i></button></div></td>
-            </tr>`;
-        });
-        c.innerHTML = html;
-        res.data.forEach(b => { const el = document.getElementById("bc-"+b.id); if(el&&b.kode_barang) try{JsBarcode(el,b.kode_barang,{format:"CODE128",width:1,height:20,displayValue:false,margin:2});}catch(e){} });
-        renderPagination(res.pagination);
-    } else {
-        c.innerHTML = `<tr><td colspan="8" class="text-center py-5" style="color:#64748b"><i class="fas fa-box-open mb-3 d-block" style="font-size:2.5rem;opacity:0.3"></i><p class="font-medium">Belum ada data barang</p><small>Klik "Tambah Barang" untuk menambah data baru</small></td></tr>`;
-        document.getElementById("pagination-container").innerHTML = "";
-    }
-}
+// Live search
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const keyword = this.value.toLowerCase();
+    document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(keyword) ? '' : 'none';
+    });
+});
+</script>
 
-function renderPagination(p) {
-    if (!p||p.pages<=1) { document.getElementById("pagination-container").innerHTML=""; return; }
-    let h = `<nav><ul class="pagination pagination-sm justify-content-center mb-0">`;
-    h += `<li class="page-item ${p.page<=1?"disabled":""}"><a class="page-link" href="#" onclick="event.preventDefault();loadBarang(${p.page-1})"><i class="fas fa-chevron-left"></i></a></li>`;
-    for(let i=1;i<=p.pages;i++) { if(Math.abs(i-p.page)<=2||i===1||i===p.pages) h+=`<li class="page-item ${i===p.page?"active":""}"><a class="page-link" href="#" onclick="event.preventDefault();loadBarang(${i})">${i}</a></li>`; else if(Math.abs(i-p.page)===3) h+=`<li class="page-item disabled"><span class="page-link">...</span></li>`; }
-    h += `<li class="page-item ${p.page>=p.pages?"disabled":""}"><a class="page-link" href="#" onclick="event.preventDefault();loadBarang(${p.page+1})"><i class="fas fa-chevron-right"></i></a></li></ul></nav>`;
-    document.getElementById("pagination-container").innerHTML = h;
-}
-
-function openForm() {
-    ["form-id","form-nama","form-barcode","form-merk","form-lokasi_rak"].forEach(id => document.getElementById(id).value = "");
-    document.getElementById("form-id").value = "";
-    document.getElementById("form-kode").value = "(Auto)";
-    document.getElementById("form-kategori").value = "";
-    document.getElementById("form-satuan").value = "Pcs";
-    document.getElementById("form-harga_modal").value = "0";
-    document.getElementById("form-harga_jual").value = "0";
-    document.getElementById("form-stok").value = "0";
-    document.getElementById("form-stok_minimum").value = "5";
-    document.getElementById("form-status").value = "aktif";
-    document.getElementById("modal-title").innerHTML = "<i class=\\"fas fa-plus-circle mr-2\\" style=\\"color:#22c55e\\"></i>Tambah Barang";
-    $("#formModal").modal("show");
-}
-
-async function editBarang(id) {
-    const res = await apiRequest("getBarang", {id}, "POST");
-    if (res.status === "success" && res.data) {
-        const b = Array.isArray(res.data) ? res.data[0] : res.data;
-        document.getElementById("form-id").value = b.id;
-        document.getElementById("form-kode").value = b.kode_barang;
-        document.getElementById("form-nama").value = b.nama;
-        document.getElementById("form-barcode").value = b.barcode || "";
-        document.getElementById("form-merk").value = b.merk || "";
-        document.getElementById("form-kategori").value = b.kategori_id || "";
-        document.getElementById("form-satuan").value = b.satuan || "Pcs";
-        document.getElementById("form-harga_modal").value = b.harga_modal || 0;
-        document.getElementById("form-harga_jual").value = b.harga_jual || 0;
-        document.getElementById("form-stok").value = b.stok || 0;
-        document.getElementById("form-stok_minimum").value = b.stok_minimum || 5;
-        document.getElementById("form-lokasi_rak").value = b.lokasi_rak || "";
-        document.getElementById("form-status").value = b.status || "aktif";
-        document.getElementById("modal-title").innerHTML = "<i class=\\"fas fa-edit mr-2\\" style=\\"color:#f59e0b\\"></i>Edit Barang";
-        $("#formModal").modal("show");
-    }
-}
-
-async function saveBarang() {
-    const form = document.getElementById("data-form");
-    if (!form.checkValidity()) { form.reportValidity(); return; }
-    const data = Object.fromEntries(new FormData(form).entries());
-    const res = await apiRequest(data.id ? "updateBarang" : "addBarang", data);
-    if (res.status === "success") { showToast(res.message || "Data tersimpan"); $("#formModal").modal("hide"); loadBarang(1, document.getElementById("search-input").value); }
-    else { showToast(res.message || "Gagal menyimpan", "error"); }
-}
-
-async function deleteBarang(id) {
-    if (!confirm("Yakin ingin menghapus barang ini?")) return;
-    const res = await apiRequest("deleteBarang", {id});
-    if (res.status === "success") { showToast("Barang dihapus"); loadBarang(1, document.getElementById("search-input").value); }
-    else showToast(res.message || "Gagal", "error");
-}
-
-function openCameraScanner() {
-    $("#scannerModal").modal("show");
-    setTimeout(() => {
-        startScanner("scanner-reader", (code) => {
-            document.getElementById("form-barcode").value = code;
-            $("#scannerModal").modal("hide");
-            stopScanner();
-            showToast("Barcode: " + code);
-        });
-    }, 500);
-}
-
-function previewBarcode(kode, nama) {
-    document.getElementById("barcode-preview").innerHTML = `<div class="p-3" id="printable-barcode"><svg id="modal-barcode-svg"></svg><p class="mt-2 font-semibold" style="color:#0f172a">${nama}</p><small style="color:#64748b">${kode}</small></div>`;
-    $("#barcodePrintModal").modal("show");
-    setTimeout(() => { try{JsBarcode("#modal-barcode-svg",kode,{format:"CODE128",width:2,height:60,displayValue:true,fontSize:14,margin:10});}catch(e){} }, 300);
-}
-
-function printBarcode() {
-    const svg = document.getElementById("modal-barcode-svg");
-    const nama = svg.nextElementSibling.textContent;
-    const kode = svg.nextElementSibling.nextElementSibling.textContent;
-    const win = window.open("","_blank","width=300,height=400");
-    win.document.write(`<html><head><title>Cetak Barcode</title><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\\/script></head><body onload="JsBarcode(\\"#bc\\",\\"${kode}\\",{format:\\"CODE128\\",width:2,height:60,displayValue:true,fontSize:14,margin:10});setTimeout(()=>{window.print();window.close()},500)"><div style="text-align:center;padding:10px"><svg id="bc"></svg><p style="font-weight:bold;margin-top:8px">${nama}</p><small>${kode}</small></div></body></html>`);
-    win.document.close();
-}
-
-loadKategori();
-loadBarang();
-'; ?>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -1,219 +1,255 @@
 <?php
-/**
- * Cetak Struk Thermal — Bengkel Pro V1
- * ?id=X&type=penjualan|wo
- * Thermal 58mm (384 dots) / 80mm (576 dots)
- */
+// cetak/struk.php - Cetak Struk Penjualan & Servis
 require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/auth.php';
+require_once __DIR__ . '/../config/functions.php';
 
-$db = getDB();
-$id = $_GET['id'] ?? 0;
-$type = $_GET['type'] ?? 'penjualan';
+$invoice = mysqli_real_escape_string($conn, $_GET['invoice'] ?? '');
+$tipe = $_GET['tipe'] ?? 'penjualan';
 
-// Get bengkel info
-$cfg = $db->query("SELECT * FROM app_config LIMIT 1")->fetch();
-$nama_bengkel = $cfg['nama_bengkel'] ?? 'BENGKEL PRO';
-$alamat = $cfg['alamat'] ?? '';
-$no_telp = $cfg['no_telp'] ?? '';
+if (!$invoice) die('No invoice');
 
-if ($type === 'penjualan') {
-    $trx = $db->prepare("SELECT p.*, u.nama AS kasir_nama FROM penjualan p LEFT JOIN users u ON p.user_id = u.id WHERE p.id = ?");
-    $trx->execute([$id]);
-    $header = $trx->fetch();
-    $details = $db->prepare("SELECT pd.*, b.nama AS barang_nama, b.kode_barang FROM penjualan_detail pd LEFT JOIN barang b ON pd.barang_id = b.id WHERE pd.penjualan_id = ?");
-    $details->execute([$id]);
-    $items = $details->fetchAll();
-    $no_trx = $header['no_transaksi'] ?? '-';
-    $kasir = $header['kasir_nama'] ?? '-';
-} elseif ($type === 'wo') {
-    $trx = $db->prepare("SELECT wo.*, plg.nama AS pelanggan_nama, mk.nama AS mekanik_nama FROM work_order wo LEFT JOIN pelanggan plg ON wo.pelanggan_id = plg.id LEFT JOIN mekanik mk ON wo.mekanik_id = mk.id WHERE wo.id = ?");
-    $trx->execute([$id]);
-    $header = $trx->fetch();
-    // Get jasa
-    $jasa_stmt = $db->prepare("SELECT wj.*, js.nama AS jasa_nama FROM work_order_jasa wj LEFT JOIN jasa_servis js ON wj.jasa_id = js.id WHERE wj.wo_id = ?");
-    $jasa_stmt->execute([$id]);
-    $jasa_items = $jasa_stmt->fetchAll();
-    // Get sparepart
-    $sp_stmt = $db->prepare("SELECT ws.*, b.nama AS barang_nama FROM work_order_sparepart ws LEFT JOIN barang b ON ws.barang_id = b.id WHERE ws.wo_id = ?");
-    $sp_stmt->execute([$id]);
-    $sparepart_items = $sp_stmt->fetchAll();
-    $no_trx = $header['no_wo'] ?? '-';
-    $kasir = $header['mekanik_nama'] ?? '-';
+// Cari data
+if ($tipe === 'servis') {
+    $q = mysqli_query($conn, "SELECT s.*, u.nama_lengkap, pl.nama as nama_pelanggan 
+        FROM servis s 
+        LEFT JOIN users u ON s.id_user=u.id 
+        LEFT JOIN pelanggan pl ON s.id_pelanggan=pl.id
+        WHERE s.no_invoice='$invoice'");
+    $data = mysqli_fetch_assoc($q);
+    if (!$data) die('Data tidak ditemukan');
+
+    $q_detail = mysqli_query($conn, "SELECT ds.*, js.nama_jasa, b.nama_barang, m.nama_mekanik
+        FROM detail_servis ds
+        LEFT JOIN jasa_servis js ON ds.id_jasa=js.id
+        LEFT JOIN barang b ON ds.id_barang=b.id
+        LEFT JOIN mekanik m ON ds.id_mekanik=m.id
+        WHERE ds.id_servis={$data['id']}");
 } else {
-    die('Type tidak valid');
-}
+    $q = mysqli_query($conn, "SELECT p.*, u.nama_lengkap, pl.nama as nama_pelanggan 
+        FROM penjualan p 
+        LEFT JOIN users u ON p.id_user=u.id 
+        LEFT JOIN pelanggan pl ON p.id_pelanggan=pl.id
+        WHERE p.no_invoice='$invoice'");
+    $data = mysqli_fetch_assoc($q);
+    if (!$data) die('Data tidak ditemukan');
 
-if (!$header) die('Data tidak ditemukan');
+    $q_detail = mysqli_query($conn, "SELECT dp.*, b.nama_barang 
+        FROM detail_penjualan dp
+        LEFT JOIN barang b ON dp.id_barang=b.id
+        WHERE dp.id_penjualan={$data['id']}");
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Struk <?= $no_trx ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Struk - <?= htmlspecialchars($invoice) ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            width: 58mm; /* 58mm thermal — change to 80mm if needed */
-            background: #fff;
-            color: #000;
-            padding: 2mm;
-            line-height: 1.3;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 2rem 1rem;
+            background: #F1F5F9;
         }
-        .center { text-align: center; }
-        .bold { font-weight: bold; }
-        .small { font-size: 10px; }
-        .line { border-top: 1px dashed #000; margin: 4px 0; }
-        .line-double { border-top: 3px double #000; margin: 4px 0; }
-        table { width: 100%; border-collapse: collapse; }
-        td { padding: 1px 0; vertical-align: top; }
-        .text-right { text-align: right; }
-        .text-left { text-align: left; }
-        .text-center { text-align: center; }
-        
-        @media print {
-            body { width: 58mm; padding: 0; }
-            @page { size: 58mm auto; margin: 0; }
+        .struk {
+            max-width: 380px;
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+            padding: 2rem 1.5rem;
         }
-
-        .no-print {
-            padding: 10px;
+        .header {
             text-align: center;
-            background: #f1f5f9;
-            border-bottom: 2px solid #0ea5e9;
-            margin-bottom: 10px;
+            border-bottom: 2px dashed #E2E8F0;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
         }
-        .no-print button {
-            padding: 10px 24px;
-            background: #0ea5e9;
-            color: #fff;
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #1E293B;
+        }
+        .header h1 span { color: #4F46E5; }
+        .header p {
+            font-size: 0.75rem;
+            color: #64748B;
+            margin-top: 0.25rem;
+        }
+        .info {
+            font-size: 0.813rem;
+            color: #475569;
+            margin-bottom: 1rem;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.25rem;
+        }
+        .info-label { color: #94A3B8; }
+        .items {
+            border-top: 1px solid #E2E8F0;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 0.75rem 0;
+            margin-bottom: 0.75rem;
+        }
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.25rem 0;
+            font-size: 0.813rem;
+        }
+        .item-left { flex: 1; }
+        .item-name { font-weight: 600; color: #1E293B; }
+        .item-meta { font-size: 0.688rem; color: #94A3B8; }
+        .item-price { font-weight: 700; color: #1E293B; white-space: nowrap; }
+        .total-section {
+            text-align: right;
+            margin-bottom: 1rem;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.813rem;
+            color: #475569;
+            padding: 0.125rem 0;
+        }
+        .grand-total {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #4F46E5;
+            border-top: 2px solid #1E293B;
+            padding-top: 0.5rem;
+            margin-top: 0.25rem;
+            display: flex;
+            justify-content: space-between;
+        }
+        .footer {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #94A3B8;
+            border-top: 2px dashed #E2E8F0;
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        .btn-print {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            background: #4F46E5;
+            color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.875rem;
             cursor: pointer;
-            margin: 4px;
+            margin-top: 1rem;
+            font-family: 'Inter', sans-serif;
         }
-        .no-print button:hover { background: #0284c7; }
+        .btn-print:hover { background: #4338CA; }
+        @media print {
+            body { background: white; padding: 0; }
+            .struk { box-shadow: none; border-radius: 0; padding: 1rem; }
+            .btn-print { display: none; }
+        }
     </style>
 </head>
 <body>
-    <div class="no-print">
-        <p style="font-size:14px;font-weight:bold;margin-bottom:8px">Preview Struk Thermal</p>
-        <button onclick="window.print()"><i class="fas fa-print"></i> Cetak Struk</button>
-        <button onclick="window.close()">Tutup</button>
+    <div class="struk">
+        <div class="header">
+            <h1>Bengkel<span>POS</span></h1>
+            <p>Sistem Manajemen Bengkel Profesional</p>
+        </div>
+
+        <div class="info">
+            <div class="info-row">
+                <span class="info-label">No. Invoice</span>
+                <span class="font-semibold"><?= htmlspecialchars($data['no_invoice']) ?></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Tanggal</span>
+                <span><?= tglIndo($data['tgl']) ?></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Kasir</span>
+                <span><?= htmlspecialchars($data['nama_lengkap']) ?></span>
+            </div>
+            <?php if ($data['nama_pelanggan']): ?>
+            <div class="info-row">
+                <span class="info-label">Pelanggan</span>
+                <span><?= htmlspecialchars($data['nama_pelanggan']) ?></span>
+            </div>
+            <?php endif; ?>
+            <?php if ($tipe === 'servis'): ?>
+            <div class="info-row">
+                <span class="info-label">Motor</span>
+                <span><?= htmlspecialchars($data['no_plat']) ?> - <?= htmlspecialchars($data['jenis_motor']) ?></span>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="items">
+            <?php while($d = mysqli_fetch_assoc($q_detail)): ?>
+            <div class="item">
+                <div class="item-left">
+                    <div class="item-name">
+                        <?php if ($tipe === 'servis' && $d['tipe'] === 'jasa'): ?>
+                            <?= htmlspecialchars($d['nama_jasa']) ?>
+                            <?php if ($d['nama_mekanik']): ?>
+                                <br><span class="item-meta">Mekanik: <?= htmlspecialchars($d['nama_mekanik']) ?></span>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <?= htmlspecialchars($d['nama_barang'] ?? '-') ?>
+                        <?php endif; ?>
+                    </div>
+                    <div class="item-meta"><?= $d['qty'] ?> x <?= rupiah($d['harga_satuan']) ?></div>
+                </div>
+                <div class="item-price"><?= rupiah($d['subtotal']) ?></div>
+            </div>
+            <?php endwhile; ?>
+        </div>
+
+        <?php if ($tipe === 'servis'): ?>
+        <div class="total-section">
+            <div class="total-row">
+                <span>Total Jasa</span>
+                <span><?= rupiah($data['total_jasa']) ?></span>
+            </div>
+            <div class="total-row">
+                <span>Total Barang</span>
+                <span><?= rupiah($data['total_barang']) ?></span>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <div class="grand-total">
+            <span>Grand Total</span>
+            <span><?= rupiah($tipe === 'servis' ? $data['grand_total'] : $data['total']) ?></span>
+        </div>
+
+        <div class="total-row" style="margin-top: 0.5rem;">
+            <span>Bayar</span>
+            <span><?= rupiah($data['bayar']) ?></span>
+        </div>
+        <div class="total-row" style="font-weight: 700; color: #059669; font-size: 0.938rem;">
+            <span>Kembalian</span>
+            <span><?= rupiah($data['kembalian']) ?></span>
+        </div>
+
+        <div class="footer">
+            <p>Terima kasih telah menggunakan layanan kami</p>
+            <p style="margin-top: 0.25rem;">Semoga puas dengan pelayanan BengkelPOS</p>
+        </div>
+
+        <button class="btn-print" onclick="window.print()">
+            <i class="fas fa-print"></i> Cetak Struk
+        </button>
     </div>
-
-    <!-- HEADER -->
-    <div class="center bold" style="font-size:14px"><?= strtoupper($nama_bengkel) ?></div>
-    <div class="center small"><?= $alamat ?></div>
-    <?php if ($no_telp): ?>
-    <div class="center small">Telp: <?= $no_telp ?></div>
-    <?php endif; ?>
-    
-    <div class="line-double"></div>
-    
-    <div class="center bold small">STRUK <?= strtoupper($type === 'penjualan' ? 'PENJUALAN' : 'SERVIS') ?></div>
-    
-    <div class="line"></div>
-    
-    <!-- INFO TRX -->
-    <table>
-        <tr><td class="small">No</td><td class="text-right bold"><?= $no_trx ?></td></tr>
-        <tr><td class="small">Tanggal</td><td class="text-right"><?= date('d/m/Y H:i', strtotime($header['created_at'] ?? $header['tanggal'] ?? 'now')) ?></td></tr>
-        <tr><td class="small">Kasir/Mekanik</td><td class="text-right"><?= $kasir ?></td></tr>
-        <?php if ($type === 'penjualan' && !empty($header['metode_bayar'])): ?>
-        <tr><td class="small">Bayar</td><td class="text-right"><?= strtoupper($header['metode_bayar']) ?></td></tr>
-        <?php endif; ?>
-        <?php if ($type === 'wo'): ?>
-        <tr><td class="small">Pelanggan</td><td class="text-right"><?= $header['pelanggan_nama'] ?? '-' ?></td></tr>
-        <tr><td class="small">Plat</td><td class="text-right"><?= $header['plat_nomor'] ?? '-' ?></td></tr>
-        <tr><td class="small">Motor</td><td class="text-right"><?= $header['tipe_motor'] ?? '-' ?></td></tr>
-        <?php endif; ?>
-    </table>
-    
-    <div class="line"></div>
-    
-    <!-- ITEMS -->
-    <?php if ($type === 'penjualan'): ?>
-    <table>
-        <tr><th class="text-left small">Barang</th><th class="text-right small">Qty</th><th class="text-right small">Harga</th><th class="text-right small">Subtotal</th></tr>
-        <?php foreach ($items as $item): ?>
-        <tr>
-            <td class="small"><?= $item['barang_nama'] ?></td>
-            <td class="text-right small"><?= $item['qty'] ?></td>
-            <td class="text-right small"><?= number_format($item['harga'], 0, ',', '.') ?></td>
-            <td class="text-right small"><?= number_format($item['subtotal'], 0, ',', '.') ?></td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
-    <?php elseif ($type === 'wo'): ?>
-    <?php if (!empty($jasa_items)): ?>
-    <div class="bold small">JASA SERVIS:</div>
-    <table>
-        <?php foreach ($jasa_items as $j): ?>
-        <tr>
-            <td class="small"><?= $j['jasa_nama'] ?></td>
-            <td class="text-right small"><?= number_format($j['subtotal'], 0, ',', '.') ?></td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
-    <?php endif; ?>
-    <?php if (!empty($sparepart_items)): ?>
-    <div class="bold small">SPAREPART:</div>
-    <table>
-        <?php foreach ($sparepart_items as $s): ?>
-        <tr>
-            <td class="small"><?= $s['barang_nama'] ?> (x<?= $s['qty'] ?>)</td>
-            <td class="text-right small"><?= number_format($s['subtotal'], 0, ',', '.') ?></td>
-        </tr>
-        <?php endforeach; ?>
-    </table>
-    <?php endif; ?>
-    <?php endif; ?>
-    
-    <div class="line-double"></div>
-    
-    <!-- TOTALS -->
-    <?php if ($type === 'penjualan'): ?>
-    <table>
-        <tr><td class="small">Subtotal</td><td class="text-right small"><?= number_format($header['subtotal'] ?? 0, 0, ',', '.') ?></td></tr>
-        <?php if (($header['diskon'] ?? 0) > 0): ?>
-        <tr><td class="small">Diskon</td><td class="text-right small">-<?= number_format($header['diskon'], 0, ',', '.') ?></td></tr>
-        <?php endif; ?>
-        <?php if (($header['pajak'] ?? 0) > 0): ?>
-        <tr><td class="small">Pajak</td><td class="text-right small"><?= number_format($header['pajak'], 0, ',', '.') ?></td></tr>
-        <?php endif; ?>
-        <tr><td class="bold small">TOTAL</td><td class="text-right bold small"><?= number_format($header['grand_total'] ?? 0, 0, ',', '.') ?></td></tr>
-        <tr><td class="small">Bayar</td><td class="text-right small"><?= number_format($header['bayar'] ?? 0, 0, ',', '.') ?></td></tr>
-        <?php if (($header['kembali'] ?? 0) > 0): ?>
-        <tr><td class="small">Kembali</td><td class="text-right small"><?= number_format($header['kembali'], 0, ',', '.') ?></td></tr>
-        <?php endif; ?>
-    </table>
-    <?php elseif ($type === 'wo'): ?>
-    <table>
-        <tr><td class="small">Jasa Servis</td><td class="text-right small"><?= number_format($header['total_jasa'] ?? 0, 0, ',', '.') ?></td></tr>
-        <tr><td class="small">Sparepart</td><td class="text-right small"><?= number_format($header['total_sparepart'] ?? 0, 0, ',', '.') ?></td></tr>
-        <tr><td class="bold small">TOTAL</td><td class="text-right bold small"><?= number_format($header['grand_total'] ?? 0, 0, ',', '.') ?></td></tr>
-        <tr><td class="small">Status Bayar</td><td class="text-right small"><?= strtoupper($header['status_bayar'] ?? 'belum') ?></td></tr>
-    </table>
-    <?php endif; ?>
-    
-    <div class="line-double"></div>
-    
-    <div class="center small">Terima kasih atas kunjungan Anda</div>
-    <div class="center small">Barang yang sudah dibeli tidak</div>
-    <div class="center small">dapat dikembalikan</div>
-    
-    <div class="center small" style="margin-top:8px">*** <?= $nama_bengkel ?> ***</div>
-
-    <!-- Auto print on load -->
-    <script>
-    window.onload = function() {
-        // Auto-print after 500ms
-        setTimeout(function() { window.print(); }, 500);
-    };
-    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </body>
 </html>

@@ -1,108 +1,204 @@
 <?php
-$pageTitle = 'Data Supplier';
+$page_title = 'Data Supplier';
+require_once __DIR__ . '/../config/database.php';
+
+// Proses Simpan / Edit / Hapus — BEFORE header
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $aksi = $_POST['aksi'] ?? '';
+    $id = (int)($_POST['id'] ?? 0);
+
+    if ($aksi === 'hapus' && $id) {
+        mysqli_query($conn, "DELETE FROM supplier WHERE id=$id");
+        $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Supplier dihapus!'];
+    } elseif ($aksi === 'tambah' || $aksi === 'edit') {
+        $nama = mysqli_real_escape_string($conn, $_POST['nama_supplier'] ?? '');
+        $telepon = mysqli_real_escape_string($conn, $_POST['no_telepon'] ?? '');
+        $alamat = mysqli_real_escape_string($conn, $_POST['alamat'] ?? '');
+
+        if ($aksi === 'tambah') {
+            mysqli_query($conn, "INSERT INTO supplier (nama_supplier, no_telepon, alamat) VALUES ('$nama', '$telepon', '$alamat')");
+            $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Supplier ditambahkan!'];
+        } elseif ($id) {
+            mysqli_query($conn, "UPDATE supplier SET nama_supplier='$nama', no_telepon='$telepon', alamat='$alamat' WHERE id=$id");
+            $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Supplier diupdate!'];
+        }
+    }
+    header('Location: supplier.php');
+    exit;
+}
+
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../config/auth.php';
-requireRole(['owner','admin','gudang']);
+
+$q = mysqli_query($conn, "SELECT s.*, 
+    (SELECT COUNT(*) FROM pembelian WHERE id_supplier=s.id) as jml_pembelian,
+    (SELECT COALESCE(SUM(total),0) FROM pembelian WHERE id_supplier=s.id) as total_pembelian
+    FROM supplier s ORDER BY s.nama_supplier ASC");
+$flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
+
+$supplier_list = [];
+while($r = mysqli_fetch_assoc($q)) $supplier_list[] = $r;
+$total_supplier = count($supplier_list);
+$total_transaksi = array_sum(array_column($supplier_list, 'jml_pembelian'));
+$total_nilai = array_sum(array_column($supplier_list, 'total_pembelian'));
 ?>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 animate-fade-in-up">
+<div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1 class="h4 font-bold" style="color:#f1f5f9"><i class="fas fa-truck mr-2" style="color:#a78bfa"></i>Data Supplier</h1>
-        <small style="color:#64748b">Kelola data supplier dan vendor parts</small>
+        <h1><i class="fas fa-truck text-indigo-600 mr-2"></i>Data Supplier</h1>
+        <p>Kelola data supplier / pemasok sparepart & aksesoris</p>
     </div>
-    <button class="btn btn-primary mt-2 mt-md-0" onclick="openForm()"><i class="fas fa-plus mr-1"></i> Tambah Supplier</button>
+    <button onclick="openModal('modalSupplier')" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Tambah Supplier
+    </button>
 </div>
 
-<div class="card mb-4 animate-fade-in-up" style="animation-delay:0.1s;opacity:0">
-    <div class="card-body p-3">
-        <div class="input-group" style="max-width:400px">
-            <div class="input-group-prepend"><span class="input-group-text" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);border-radius:0.75rem 0 0 0.75rem;color:#64748b"><i class="fas fa-search"></i></span></div>
-            <input type="text" class="form-control" id="search-input" placeholder="Cari supplier..." oninput="loadData()" style="border-radius:0 0.75rem 0.75rem 0">
-        </div>
+<!-- Stats -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+    <div class="stat-card stat-card-indigo">
+        <div class="stat-card-icon"><i class="fas fa-truck"></i></div>
+        <div class="stat-card-value"><?= $total_supplier ?></div>
+        <div class="stat-card-label">Total Supplier</div>
+    </div>
+    <div class="stat-card stat-card-amber">
+        <div class="stat-card-icon"><i class="fas fa-shopping-bag"></i></div>
+        <div class="stat-card-value"><?= $total_transaksi ?></div>
+        <div class="stat-card-label">Total Pembelian</div>
+    </div>
+    <div class="stat-card stat-card-green">
+        <div class="stat-card-icon"><i class="fas fa-money-bill-wave"></i></div>
+        <div class="stat-card-value"><?= rupiah($total_nilai) ?></div>
+        <div class="stat-card-label">Total Nilai Pembelian</div>
     </div>
 </div>
 
-<div class="card animate-fade-in-up" style="animation-delay:0.2s;opacity:0">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead><tr><th>No</th><th>Kode</th><th>Nama</th><th>Alamat</th><th>No HP</th><th>Email</th><th>Aksi</th></tr></thead>
-                <tbody id="data-container"><tr><td colspan="7" class="text-center py-5" style="color:#64748b"><i class="fas fa-spinner fa-spin mr-2"></i>Memuat...</td></tr></tbody>
+<?php if ($flash): ?><div class="alert alert-<?= $flash['type'] ?> animate-slide-down"><i class="fas fa-check-circle"></i> <?= $flash['msg'] ?></div><?php endif; ?>
+
+<div class="content-card">
+    <div class="content-card-header">
+        <span class="text-sm text-gray-400">Total: <strong><?= $total_supplier ?></strong> supplier</span>
+    </div>
+    <div class="content-card-body p-0">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:45px">#</th>
+                        <th>Nama Supplier</th>
+                        <th>Kontak</th>
+                        <th>Total Pembelian</th>
+                        <th>Nilai Pembelian</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (count($supplier_list) > 0): $no=1; ?>
+                        <?php foreach($supplier_list as $r): ?>
+                        <tr>
+                            <td class="text-gray-400 text-xs"><?= $no++ ?></td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-100 to-green-50 flex items-center justify-center text-emerald-500 text-xs flex-shrink-0">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-sm"><?= htmlspecialchars($r['nama_supplier']) ?></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="flex flex-col gap-0.5">
+                                    <?php if ($r['no_telepon']): ?>
+                                        <a href="tel:<?= htmlspecialchars($r['no_telepon']) ?>" class="text-xs text-indigo-500 hover:text-indigo-700">
+                                            <i class="fas fa-phone-alt mr-1" style="font-size:9px"></i><?= htmlspecialchars($r['no_telepon']) ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-xs text-gray-300">-</span>
+                                    <?php endif; ?>
+                                    <?php if ($r['alamat']): ?>
+                                        <span class="text-[10px] text-gray-400 truncate max-w-[160px]" title="<?= htmlspecialchars($r['alamat']) ?>">
+                                            <i class="fas fa-map-pin mr-1"></i><?= htmlspecialchars($r['alamat']) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td><span class="badge badge-info text-[10px]"><?= $r['jml_pembelian'] ?>x</span></td>
+                            <td class="text-indigo-600 font-semibold text-xs"><?= rupiah($r['total_pembelian']) ?></td>
+                            <td>
+                                <div class="flex gap-1 justify-center">
+                                    <button onclick='editSupplier(<?= json_encode($r) ?>)' class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                                    <form method="POST" style="display:inline" onsubmit="return confirm('Hapus supplier <?= htmlspecialchars($r['nama_supplier']) ?>?')">
+                                        <input type="hidden" name="aksi" value="hapus">
+                                        <input type="hidden" name="id" value="<?= $r['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan="6" class="text-center py-16">
+                            <div class="inline-flex flex-col items-center">
+                                <div class="w-20 h-20 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4">
+                                    <i class="fas fa-truck text-3xl text-emerald-300"></i>
+                                </div>
+                                <h3 class="font-semibold text-gray-400 mb-1">Belum Ada Supplier</h3>
+                                <p class="text-sm text-gray-400 mb-4">Tambahkan supplier untuk mencatat pembelian barang</p>
+                                <button onclick="openModal('modalSupplier')" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Tambah Supplier
+                                </button>
+                            </div>
+                        </td></tr>
+                    <?php endif; ?>
+                </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="formModal" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title" id="modal-title">Tambah Supplier</h5><button type="button" class="close" data-dismiss="modal"><span style="color:#94a3b8">&times;</span></button></div>
-    <div class="modal-body">
-        <form id="data-form" onsubmit="event.preventDefault();save()">
-            <input type="hidden" name="id" id="f-id">
-            <div class="form-group"><label class="form-label" style="font-size:0.8rem">Nama Supplier <span class="text-danger">*</span></label><input type="text" class="form-control" name="nama" id="f-nama" required placeholder="Nama supplier / toko"></div>
-            <div class="form-group"><label class="form-label" style="font-size:0.8rem">Alamat</label><textarea class="form-control" name="alamat" id="f-alamat" rows="2" placeholder="Alamat lengkap..."></textarea></div>
-            <div class="row">
-                <div class="col-md-6"><div class="form-group"><label class="form-label" style="font-size:0.8rem">No HP</label><input type="text" class="form-control" name="no_hp" id="f-hp" placeholder="08xxx"></div></div>
-                <div class="col-md-6"><div class="form-group"><label class="form-label" style="font-size:0.8rem">Email</label><input type="email" class="form-control" name="email" id="f-email" placeholder="supplier@email.com"></div></div>
+<div class="modal" id="modalSupplier">
+    <div class="modal-backdrop" onclick="closeModal('modalSupplier')"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah Supplier</h3>
+            <button class="modal-close" onclick="closeModal('modalSupplier')"><i class="fas fa-times"></i></button>
+        </div>
+        <form method="POST">
+            <div class="modal-body">
+                <input type="hidden" name="aksi" id="formAksi" value="tambah">
+                <input type="hidden" name="id" id="formId" value="0">
+                <div class="form-group">
+                    <label class="form-label">Nama Supplier <span class="text-red-400">*</span></label>
+                    <input type="text" name="nama_supplier" id="formNama" class="form-control" required placeholder="Nama supplier">
+                </div>
+                <div class="form-row grid-cols-2">
+                    <div class="form-group">
+                        <label class="form-label">No. Telepon</label>
+                        <input type="text" name="no_telepon" id="formTelepon" class="form-control" placeholder="08xxxxxxxxxx">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Alamat</label>
+                    <textarea name="alamat" id="formAlamat" class="form-control" placeholder="Alamat supplier"></textarea>
+                </div>
             </div>
-            <div class="form-group"><label class="form-label" style="font-size:0.8rem">Catatan</label><textarea class="form-control" name="catatan" id="f-catatan" rows="2" placeholder="Catatan tentang supplier..."></textarea></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('modalSupplier')">Batal</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan</button>
+            </div>
         </form>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i> Batal</button><button class="btn btn-primary" onclick="save()"><i class="fas fa-save mr-1"></i> Simpan</button></div>
-</div></div></div>
+</div>
 
-<?php $extraScripts = '
-async function loadData(){
-    const c=document.getElementById("data-container");
-    const q=document.getElementById("search-input").value.toLowerCase();
-    const res=await apiRequest("getSupplier",{},"GET");
-    if(res.status==="success"&&res.data){
-        let filtered=res.data;
-        if(q)filtered=filtered.filter(s=>s.nama.toLowerCase().includes(q)||(s.alamat||"").toLowerCase().includes(q));
-        if(filtered.length>0){
-            c.innerHTML=filtered.map((s,i)=>`<tr style="animation:fadeInUp 0.3s ease forwards;opacity:0;animation-delay:${i*0.03}s">
-                <td>${i+1}</td>
-                <td><span style="color:#0ea5e9;font-weight:600;font-size:0.8rem">${s.kode_supplier}</span></td>
-                <td class="font-semibold">${s.nama}</td>
-                <td><small style="color:#64748b">${s.alamat||"-"}</small></td>
-                <td>${s.no_hp||"-"}</td>
-                <td><small>${s.email||"-"}</small></td>
-                <td><div class="btn-group btn-group-sm"><button class="btn btn-secondary" onclick="edit(${s.id})" title="Edit"><i class="fas fa-edit"></i></button><button class="btn btn-secondary" onclick="hapus(${s.id})" title="Hapus" style="color:#ef4444"><i class="fas fa-trash"></i></button></div></td>
-            </tr>`).join("");
-        } else { c.innerHTML=`<tr><td colspan="7" class="text-center py-5" style="color:#64748b"><p>Belum ada data supplier</p></td></tr>`; }
-    }
+<script>
+function editSupplier(data) {
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit text-amber-500 mr-2"></i>Edit Supplier';
+    document.getElementById('formAksi').value = 'edit';
+    document.getElementById('formId').value = data.id;
+    document.getElementById('formNama').value = data.nama_supplier;
+    document.getElementById('formTelepon').value = data.no_telepon || '';
+    document.getElementById('formAlamat').value = data.alamat || '';
+    openModal('modalSupplier');
 }
-function openForm(){
-    ["f-id","f-nama","f-alamat","f-hp","f-email","f-catatan"].forEach(id=>document.getElementById(id).value="");
-    document.getElementById("modal-title").innerHTML="<i class=\\"fas fa-plus-circle mr-2\\" style=\\"color:#22c55e\\"></i>Tambah Supplier";
-    $("#formModal").modal("show");
-}
-async function edit(id){
-    const res=await apiRequest("getSupplier",{},"GET");
-    if(res.status==="success"&&res.data){
-        const s=res.data.find(x=>x.id==id);if(!s)return;
-        document.getElementById("f-id").value=s.id;
-        document.getElementById("f-nama").value=s.nama;
-        document.getElementById("f-alamat").value=s.alamat||"";
-        document.getElementById("f-hp").value=s.no_hp||"";
-        document.getElementById("f-email").value=s.email||"";
-        document.getElementById("f-catatan").value=s.catatan||"";
-        document.getElementById("modal-title").innerHTML="<i class=\\"fas fa-edit mr-2\\" style=\\"color:#f59e0b\\"></i>Edit Supplier";
-        $("#formModal").modal("show");
-    }
-}
-async function save(){
-    const f=document.getElementById("data-form");
-    if(!f.checkValidity()){f.reportValidity();return;}
-    const d=Object.fromEntries(new FormData(f).entries());
-    const r=await apiRequest(d.id?"updateSupplier":"addSupplier",d);
-    if(r.status==="success"){showToast(r.message);$("#formModal").modal("hide");loadData();}
-    else showToast(r.message||"Gagal","error");
-}
-async function hapus(id){
-    if(!confirm("Yakin hapus supplier ini?"))return;
-    const r=await apiRequest("deleteSupplier",{id});
-    if(r.status==="success"){showToast("Dihapus");loadData();}else showToast(r.message||"Gagal","error");
-}
-loadData();
-'; ?>
+</script>
+
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

@@ -1,51 +1,91 @@
-        </div><!-- /.container-fluid -->
-    </div><!-- /.content -->
-</div><!-- /.content-wrapper -->
-
-<!-- Footer -->
-<footer class="main-footer text-center no-print" style="background:#0f172a;border-top:1px solid rgba(255,255,255,0.05)">
-    <div class="d-none d-sm-inline-block">
-        <small style="color:#475569"><?= $settings['nama_bengkel'] ?> &copy; <?= date('Y') ?>. Bengkel Pro V1</small>
     </div>
-</footer>
-</div><!-- /.wrapper -->
+    <!-- End Page Content -->
+</div>
+<!-- End Main Content -->
 
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<!-- Bootstrap 4 -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
-<!-- AdminLTE 3 -->
-<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<!-- JsBarcode -->
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-<!-- html5-qrcode -->
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<!-- Custom App JS -->
-<script src="<?= BASE_URL ?>/assets/js/app.js"></script>
-
+<!-- JavaScript -->
 <script>
-// Theme Toggle
+// ---- DARK MODE TOGGLE ----
 function toggleTheme() {
-    const current = document.documentElement.getAttribute('data-theme') || 'dark';
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.cookie = `theme=${next};path=/;max-age=31536000`;
-    if (next === 'dark') {
-        document.body.classList.add('dark-mode');
-        document.getElementById('theme-icon-dark').style.display = '';
-        document.getElementById('theme-icon-light').style.display = 'none';
+    const body = document.body;
+    body.classList.toggle('dark-mode');
+    const icon = document.getElementById('themeIcon');
+    if (body.classList.contains('dark-mode')) {
+        icon.className = 'fas fa-sun';
+        localStorage.setItem('theme', 'dark');
     } else {
-        document.body.classList.remove('dark-mode');
-        document.getElementById('theme-icon-dark').style.display = 'none';
-        document.getElementById('theme-icon-light').style.display = '';
+        icon.className = 'fas fa-moon';
+        localStorage.setItem('theme', 'light');
     }
-    document.documentElement.setAttribute('data-theme', next);
+}
+
+// Init: load saved theme
+(function() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('themeIcon').className = 'fas fa-sun';
+    }
+})();
+
+// Toggle Sidebar
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+}
+
+// Close sidebar on resize to desktop
+window.addEventListener('resize', function() {
+    if (window.innerWidth > 1024) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('show');
+    }
+});
+
+// Format Rupiah
+function formatRupiah(angka) {
+    return 'Rp ' + parseInt(angka).toLocaleString('id-ID');
+}
+
+// ---- MODAL FUNCTIONS ----
+function openModal(id) {
+    document.getElementById(id).classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+    });
+});
+
+// ---- NOTIFICATION / ALERT AUTO-HIDE ----
+document.querySelectorAll('.alert').forEach(function(alert) {
+    setTimeout(function() {
+        alert.style.transition = 'opacity 0.5s ease';
+        alert.style.opacity = '0';
+        setTimeout(function() { alert.remove(); }, 500);
+    }, 4000);
+});
+
+// ---- CONFIRM DIALOG ----
+function confirmAction(message, callback) {
+    if (confirm(message || 'Apakah Anda yakin?')) {
+        callback();
+    }
 }
 </script>
-
-<?php if (isset($extraScripts)): ?>
-<script><?= $extraScripts ?></script>
-<?php endif; ?>
+<script src="/Bengkel POS/assets/js/app.js"></script>
 </body>
 </html>

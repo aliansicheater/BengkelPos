@@ -1,183 +1,297 @@
 <?php
-$pageTitle = 'Dashboard';
+$page_title = 'Dashboard';
 require_once __DIR__ . '/includes/header.php';
+
+// Statistik
+$tgl_sekarang = date('Y-m-d');
+$bulan_ini = date('Y-m');
+$tahun_ini = date('Y');
+
+// Total penjualan hari ini
+$q_penjualan = mysqli_query($conn, "SELECT COALESCE(SUM(total),0) as total, COUNT(*) as count FROM penjualan WHERE tgl = '$tgl_sekarang'");
+$penjualan = mysqli_fetch_assoc($q_penjualan);
+
+// Total servis hari ini
+$q_servis = mysqli_query($conn, "SELECT COALESCE(SUM(grand_total),0) as total, COUNT(*) as count FROM servis WHERE tgl = '$tgl_sekarang'");
+$servis = mysqli_fetch_assoc($q_servis);
+
+// Stok menipis
+$q_stok = mysqli_query($conn, "SELECT COUNT(*) as count FROM barang WHERE stok <= stok_minimal");
+$stok_menipis = mysqli_fetch_assoc($q_stok);
+
+// Total barang
+$q_total_barang = mysqli_query($conn, "SELECT COUNT(*) as total FROM barang");
+$total_barang = mysqli_fetch_assoc($q_total_barang);
+
+// 10 transaksi terakhir
+$q_riwayat = mysqli_query($conn, "SELECT 'penjualan' as tipe, no_invoice, tgl, total as total FROM penjualan UNION ALL SELECT 'servis' as tipe, no_invoice, tgl, grand_total FROM servis ORDER BY tgl DESC, no_invoice DESC LIMIT 10");
+
+// --- CHART DATA: Penjualan 30 Hari ---
+$chart_labels = []; $chart_data = [];
+for ($i = 29; $i >= 0; $i--) {
+    $tgl = date('Y-m-d', strtotime("-$i days"));
+    $chart_labels[] = date('d/m', strtotime($tgl));
+    $q = mysqli_query($conn, "SELECT COALESCE(SUM(total),0) as total FROM penjualan WHERE tgl = '$tgl'");
+    $r = mysqli_fetch_assoc($q);
+    $chart_data[] = (int)$r['total'];
+}
+
+// --- CHART: Penjualan per Bulan (6 bulan) ---
+$bulan_labels = []; $bulan_penjualan = []; $bulan_servis = [];
+for ($i = 5; $i >= 0; $i--) {
+    $bln = date('Y-m', strtotime("-$i months"));
+    $bulan_labels[] = date('M Y', strtotime($bln . '-01'));
+    $q1 = mysqli_query($conn, "SELECT COALESCE(SUM(total),0) as total FROM penjualan WHERE DATE_FORMAT(tgl, '%Y-%m') = '$bln'");
+    $r1 = mysqli_fetch_assoc($q1);
+    $bulan_penjualan[] = (int)$r1['total'];
+    $q2 = mysqli_query($conn, "SELECT COALESCE(SUM(grand_total),0) as total FROM servis WHERE DATE_FORMAT(tgl, '%Y-%m') = '$bln'");
+    $r2 = mysqli_fetch_assoc($q2);
+    $bulan_servis[] = (int)$r2['total'];
+}
 ?>
 
-<!-- Stat Cards -->
-<div class="row">
-    <div class="col-lg-3 col-6">
-        <div class="small-box" style="background:linear-gradient(135deg,rgba(14,165,233,0.15),rgba(14,165,233,0.05))">
-            <div class="inner">
-                <h3 id="omzet-hari" class="animate-fade-in-up">Rp 0</h3>
-                <p>Omzet Hari Ini</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-money-bill-wave" style="color:rgba(14,165,233,0.4)"></i>
-            </div>
-            <a href="<?= BASE_URL ?>/laporan.php" class="small-box-footer" style="color:#0ea5e9">
-                Lihat laporan <i class="fas fa-arrow-circle-right"></i>
-            </a>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+<div class="page-header">
+    <h1><i class="fas fa-chart-pie text-indigo-600 mr-2"></i>Dashboard</h1>
+    <p>Selamat datang, <?= htmlspecialchars($_SESSION['nama_lengkap']) ?>! Ringkasan bisnis hari ini.</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="stat-card stat-card-indigo">
+        <div class="stat-card-icon"><i class="fas fa-shopping-cart"></i></div>
+        <div class="stat-card-value"><?= rupiah($penjualan['total']) ?></div>
+        <div class="stat-card-label">Penjualan Hari Ini (<?= $penjualan['count'] ?> transaksi)</div>
+    </div>
+    <div class="stat-card stat-card-amber">
+        <div class="stat-card-icon"><i class="fas fa-motorcycle"></i></div>
+        <div class="stat-card-value"><?= rupiah($servis['total']) ?></div>
+        <div class="stat-card-label">Service Hari Ini (<?= $servis['count'] ?> servis)</div>
+    </div>
+    <div class="stat-card stat-card-green">
+        <div class="stat-card-icon"><i class="fas fa-box"></i></div>
+        <div class="stat-card-value"><?= $total_barang['total'] ?></div>
+        <div class="stat-card-label">Total Barang Terdaftar</div>
+    </div>
+    <div class="stat-card stat-card-rose">
+        <div class="stat-card-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-card-value"><?= $stok_menipis['count'] ?></div>
+        <div class="stat-card-label">Stok Menipis (perlu restok)</div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Line Chart: 30 Hari -->
+    <div class="content-card">
+        <div class="content-card-header">
+            <h2><i class="fas fa-chart-line text-indigo-500 mr-2"></i>Penjualan 30 Hari</h2>
+            <span class="text-xs text-gray-400">Total per hari</span>
+        </div>
+        <div class="content-card-body">
+            <canvas id="chartPenjualan" height="220"></canvas>
         </div>
     </div>
-    <div class="col-lg-3 col-6">
-        <div class="small-box" style="background:linear-gradient(135deg,rgba(34,197,94,0.15),rgba(34,197,94,0.05))">
-            <div class="inner">
-                <h3 id="servis-hari" class="animate-fade-in-up" style="animation-delay:0.1s">0</h3>
-                <p>Servis Hari Ini</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-wrench" style="color:rgba(34,197,94,0.4)"></i>
-            </div>
-            <a href="<?= BASE_URL ?>/servis.php" class="small-box-footer" style="color:#22c55e">
-                Lihat servis <i class="fas fa-arrow-circle-right"></i>
-            </a>
+    <!-- Bar Chart: Per Bulan -->
+    <div class="content-card">
+        <div class="content-card-header">
+            <h2><i class="fas fa-chart-bar text-amber-500 mr-2"></i>Perbandingan Bulanan</h2>
+            <span class="text-xs text-gray-400">Penjualan vs Servis</span>
         </div>
-    </div>
-    <div class="col-lg-3 col-6">
-        <div class="small-box" style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(245,158,11,0.05))">
-            <div class="inner">
-                <h3 id="stok-menipis" class="animate-fade-in-up" style="animation-delay:0.2s;color:#f59e0b">0</h3>
-                <p>Stok Menipis</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-exclamation-triangle" style="color:rgba(245,158,11,0.4)"></i>
-            </div>
-            <a href="<?= BASE_URL ?>/barang.php" class="small-box-footer" style="color:#f59e0b">
-                Lihat barang <i class="fas fa-arrow-circle-right"></i>
-            </a>
-        </div>
-    </div>
-    <div class="col-lg-3 col-6">
-        <div class="small-box" style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05))">
-            <div class="inner">
-                <h3 id="servis-proses" class="animate-fade-in-up" style="animation-delay:0.3s;color:#ef4444">0</h3>
-                <p>Servis Dalam Proses</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-clock" style="color:rgba(239,68,68,0.4)"></i>
-            </div>
-            <a href="<?= BASE_URL ?>/servis.php" class="small-box-footer" style="color:#ef4444">
-                Lihat proses <i class="fas fa-arrow-circle-right"></i>
-            </a>
+        <div class="content-card-body">
+            <canvas id="chartBulanan" height="220"></canvas>
         </div>
     </div>
 </div>
 
-<!-- Second Row -->
-<div class="row mt-3">
-    <div class="col-lg-4 col-sm-6">
-        <div class="info-box" style="background:#1e293b;border:1px solid rgba(255,255,255,0.05);border-radius:1rem">
-            <span class="info-box-icon" style="background:rgba(14,165,233,0.1);border-radius:0.75rem"><i class="fas fa-chart-bar" style="color:#0ea5e9"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text" style="color:#64748b">Omzet Bulan Ini</span>
-                <span class="info-box-number" id="omzet-bulan" style="color:#f1f5f9">Rp 0</span>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Doughnut Chart: Revenue Mix -->
+    <div class="content-card">
+        <div class="content-card-header">
+            <h2><i class="fas fa-chart-pie text-green-500 mr-2"></i>Komposisi Pendapatan</h2>
+            <span class="text-xs text-gray-400">Bulan <?= date('M Y') ?></span>
+        </div>
+        <div class="content-card-body flex justify-center">
+            <div style="max-width: 260px;">
+                <canvas id="chartDoughnut" height="260"></canvas>
             </div>
         </div>
     </div>
-    <div class="col-lg-4 col-sm-6">
-        <div class="info-box" style="background:#1e293b;border:1px solid rgba(255,255,255,0.05);border-radius:1rem">
-            <span class="info-box-icon" style="background:rgba(239,68,68,0.1);border-radius:0.75rem"><i class="fas fa-hand-holding-usd" style="color:#ef4444"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text" style="color:#64748b">Piutang Pelanggan</span>
-                <span class="info-box-number" id="piutang" style="color:#f1f5f9">Rp 0</span>
-            </div>
+    <!-- Recent Transactions -->
+    <div class="content-card">
+        <div class="content-card-header">
+            <h2><i class="fas fa-clock-rotate text-indigo-500 mr-2"></i>Transaksi Terakhir</h2>
+            <a href="laporan/index.php" class="btn btn-sm btn-outline">Lihat Semua</a>
         </div>
-    </div>
-    <div class="col-lg-4 col-sm-6">
-        <div class="info-box" style="background:#1e293b;border:1px solid rgba(255,255,255,0.05);border-radius:1rem">
-            <span class="info-box-icon" style="background:rgba(245,158,11,0.1);border-radius:0.75rem"><i class="fas fa-file-invoice-dollar" style="color:#f59e0b"></i></span>
-            <div class="info-box-content">
-                <span class="info-box-text" style="color:#64748b">Hutang Supplier</span>
-                <span class="info-box-number" id="hutang" style="color:#f1f5f9">Rp 0</span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Chart + Quick Actions -->
-<div class="row mt-3">
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-chart-line mr-2" style="color:#0ea5e9"></i>Grafik Penjualan 7 Hari</h3>
-            </div>
-            <div class="card-body">
-                <canvas id="salesChart" style="height:280px"></canvas>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-bolt mr-2" style="color:#f59e0b"></i>Aksi Cepat</h3>
-            </div>
-            <div class="card-body p-2">
-                <a href="<?= BASE_URL ?>/penjualan.php" class="btn btn-block btn-primary mb-2 text-left">
-                    <i class="fas fa-cash-register mr-2"></i> Buka Kasir
-                </a>
-                <a href="<?= BASE_URL ?>/servis.php" class="btn btn-block btn-success mb-2 text-left">
-                    <i class="fas fa-motorcycle mr-2"></i> Buat Work Order
-                </a>
-                <a href="<?= BASE_URL ?>/pembelian.php" class="btn btn-block btn-warning mb-2 text-left">
-                    <i class="fas fa-shopping-cart mr-2"></i> Stok Masuk
-                </a>
-                <a href="<?= BASE_URL ?>/barang.php" class="btn btn-block btn-secondary mb-2 text-left">
-                    <i class="fas fa-boxes mr-2"></i> Data Barang
-                </a>
+        <div class="content-card-body p-0">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Tgl</th>
+                            <th>Tipe</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (mysqli_num_rows($q_riwayat) > 0): ?>
+                            <?php while($r = mysqli_fetch_assoc($q_riwayat)): ?>
+                            <tr>
+                                <td><span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded"><?= htmlspecialchars($r['no_invoice']) ?></span></td>
+                                <td><?= formatTanggal($r['tgl']) ?></td>
+                                <td>
+                                    <span class="badge <?= $r['tipe'] == 'penjualan' ? 'badge-success' : 'badge-info' ?>">
+                                        <i class="fas fa-<?= $r['tipe'] == 'penjualan' ? 'cart-shopping' : 'motorcycle' ?> mr-1"></i>
+                                        <?= ucfirst($r['tipe']) ?>
+                                    </span>
+                                </td>
+                                <td class="font-semibold"><?= rupiah($r['total']) ?></td>
+                            </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="4" class="text-center py-8 text-gray-400">
+                                    <i class="fas fa-inbox text-3xl block mb-2"></i>
+                                    Belum ada transaksi hari ini
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-<?php $extraScripts = '
-async function loadDashboard() {
-    const res = await apiRequest("getDashboard", {}, "GET");
-    if (res.status === "success") {
-        const d = res.data;
-        animateNumber(document.getElementById("omzet-hari"), d.omzet_hari);
-        animateNumber(document.getElementById("omzet-bulan"), d.omzet_bulan);
-        document.getElementById("servis-hari").textContent = d.servis_hari;
-        document.getElementById("stok-menipis").textContent = d.stok_menipis;
-        document.getElementById("servis-proses").textContent = d.servis_proses;
-        animateNumber(document.getElementById("piutang"), d.piutang);
-        animateNumber(document.getElementById("hutang"), d.hutang);
-        
-        const labels = d.grafik_penjualan.map(r => {
-            const dt = new Date(r.tanggal);
-            return dt.toLocaleDateString("id-ID", {day:"numeric", month:"short"});
-        });
-        const values = d.grafik_penjualan.map(r => r.total);
-        
-        const isDark = document.body.classList.contains("dark-mode");
-        const gridColor = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.05)";
-        const tickColor = isDark ? "#64748b" : "#94a3b8";
-        
-        new Chart(document.getElementById("salesChart"), {
-            type: "bar",
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: "Penjualan",
-                    data: values,
-                    backgroundColor: "rgba(14,165,233,0.3)",
-                    borderColor: "#0ea5e9",
-                    borderWidth: 2,
-                    borderRadius: 8,
-                    borderSkipped: false,
-                }]
+<script>
+// Chart.js Dark Mode helper
+function chartColors() {
+    const isDark = document.body.classList.contains('dark-mode');
+    return {
+        grid: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+        text: isDark ? '#94A3B8' : '#64748B',
+        border: isDark ? '#334155' : '#E2E8F0'
+    };
+}
+
+// --- CHART 1: Penjualan 30 Hari ---
+const ctx1 = document.getElementById('chartPenjualan').getContext('2d');
+new Chart(ctx1, {
+    type: 'line',
+    data: {
+        labels: <?= json_encode($chart_labels) ?>,
+        datasets: [{
+            label: 'Penjualan (Rp)',
+            data: <?= json_encode($chart_data) ?>,
+            borderColor: '#4F46E5',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 3,
+            pointBackgroundColor: '#4F46E5',
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: {
+                grid: { display: false },
+                ticks: { color: chartColors().text, font: { size: 10 } }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: tickColor, font: { size: 11 } } },
-                    y: { grid: { color: gridColor }, ticks: { color: tickColor, font: { size: 11 }, callback: v => formatRupiah(v) } }
+            y: {
+                grid: { color: chartColors().grid },
+                ticks: {
+                    color: chartColors().text,
+                    font: { size: 10 },
+                    callback: function(v) { return 'Rp' + (v / 1000).toFixed(0) + 'k'; }
                 }
             }
-        });
+        }
     }
-}
-loadDashboard();
-'; ?>
+});
+
+// --- CHART 2: Bulanan ---
+const ctx2 = document.getElementById('chartBulanan').getContext('2d');
+new Chart(ctx2, {
+    type: 'bar',
+    data: {
+        labels: <?= json_encode($bulan_labels) ?>,
+        datasets: [
+            {
+                label: 'Penjualan',
+                data: <?= json_encode($bulan_penjualan) ?>,
+                backgroundColor: 'rgba(79, 70, 229, 0.8)',
+                borderRadius: 6,
+                borderSkipped: false
+            },
+            {
+                label: 'Servis',
+                data: <?= json_encode($bulan_servis) ?>,
+                backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                borderRadius: 6,
+                borderSkipped: false
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: { color: chartColors().text, font: { size: 11 }, boxWidth: 12, padding: 10 }
+            }
+        },
+        scales: {
+            x: {
+                grid: { display: false },
+                ticks: { color: chartColors().text, font: { size: 9 } }
+            },
+            y: {
+                grid: { color: chartColors().grid },
+                ticks: {
+                    color: chartColors().text,
+                    font: { size: 10 },
+                    callback: function(v) { return 'Rp' + (v / 1000).toFixed(0) + 'k'; }
+                }
+            }
+        }
+    }
+});
+
+// --- CHART 3: Doughnut ---
+const totalPjl = <?= array_sum($bulan_penjualan) ?: 0 ?>;
+const totalSrv = <?= array_sum($bulan_servis) ?: 0 ?>;
+
+const ctx3 = document.getElementById('chartDoughnut').getContext('2d');
+new Chart(ctx3, {
+    type: 'doughnut',
+    data: {
+        labels: ['Penjualan Barang', 'Service Motor'],
+        datasets: [{
+            data: [totalPjl || 1, totalSrv || 1],
+            backgroundColor: ['#4F46E5', '#F59E0B'],
+            borderWidth: 0,
+            hoverOffset: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { color: chartColors().text, font: { size: 11 }, padding: 12 }
+            }
+        }
+    }
+});
+</script>
+
 <?php require_once __DIR__ . '/includes/footer.php'; ?>

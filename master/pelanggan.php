@@ -1,108 +1,261 @@
 <?php
-$pageTitle = 'Data Pelanggan';
+$page_title = 'Data Pelanggan';
+require_once __DIR__ . '/../config/database.php';
+
+// Proses Simpan / Edit / Hapus — BEFORE header
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $aksi = $_POST['aksi'] ?? '';
+    $id = (int)($_POST['id'] ?? 0);
+
+    if ($aksi === 'hapus' && $id) {
+        mysqli_query($conn, "DELETE FROM pelanggan WHERE id=$id");
+        $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Pelanggan dihapus!'];
+    } elseif ($aksi === 'tambah' || $aksi === 'edit') {
+        $nama = mysqli_real_escape_string($conn, $_POST['nama'] ?? '');
+        $telepon = mysqli_real_escape_string($conn, $_POST['no_telepon'] ?? '');
+        $alamat = mysqli_real_escape_string($conn, $_POST['alamat'] ?? '');
+
+        if ($aksi === 'tambah') {
+            mysqli_query($conn, "INSERT INTO pelanggan (nama, no_telepon, alamat) VALUES ('$nama', '$telepon', '$alamat')");
+            $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Pelanggan ditambahkan!'];
+        } elseif ($id) {
+            mysqli_query($conn, "UPDATE pelanggan SET nama='$nama', no_telepon='$telepon', alamat='$alamat' WHERE id=$id");
+            $_SESSION['flash'] = ['type' => 'success', 'msg' => 'Pelanggan diupdate!'];
+        }
+    }
+    header('Location: pelanggan.php');
+    exit;
+}
+
 require_once __DIR__ . '/../includes/header.php';
-require_once __DIR__ . '/../config/auth.php';
-requireRole(['owner','admin','kasir']);
+
+$q = mysqli_query($conn, "SELECT p.*, 
+    (SELECT COUNT(*) FROM penjualan WHERE id_pelanggan=p.id) as jml_transaksi,
+    (SELECT COUNT(*) FROM servis WHERE id_pelanggan=p.id) as jml_servis
+    FROM pelanggan p ORDER BY p.nama ASC");
+$flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
+
+$total_pelanggan = mysqli_num_rows($q);
+$pelanggan_list = [];
+while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
 ?>
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 animate-fade-in-up">
+<div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1 class="h4 font-bold" style="color:#f1f5f9"><i class="fas fa-users mr-2" style="color:#38bdf8"></i>Data Pelanggan</h1>
-        <small style="color:#64748b">Kelola data pelanggan dan riwayat servis</small>
+        <h1><i class="fas fa-users text-indigo-600 mr-2"></i>Data Pelanggan</h1>
+        <p>Kelola data pelanggan dan lihat riwayat transaksi</p>
     </div>
-    <button class="btn btn-primary mt-2 mt-md-0" onclick="openForm()"><i class="fas fa-plus mr-1"></i> Tambah Pelanggan</button>
+    <button onclick="openModal('modalPelanggan')" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Tambah Pelanggan
+    </button>
 </div>
 
-<div class="card mb-4 animate-fade-in-up" style="animation-delay:0.1s;opacity:0">
-    <div class="card-body p-3">
-        <div class="input-group" style="max-width:400px">
-            <div class="input-group-prepend"><span class="input-group-text" style="background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.1);border-radius:0.75rem 0 0 0.75rem;color:#64748b"><i class="fas fa-search"></i></span></div>
-            <input type="text" class="form-control" id="search-input" placeholder="Cari nama, no HP, atau plat..." oninput="loadData()" style="border-radius:0 0.75rem 0.75rem 0">
+<!-- Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+    <div class="stat-card stat-card-indigo">
+        <div class="stat-card-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-card-value"><?= $total_pelanggan ?></div>
+        <div class="stat-card-label">Total Pelanggan</div>
+    </div>
+    <div class="stat-card stat-card-green">
+        <div class="stat-card-icon"><i class="fas fa-shopping-cart"></i></div>
+        <div class="stat-card-value"><?= array_sum(array_column($pelanggan_list, 'jml_transaksi')) ?></div>
+        <div class="stat-card-label">Total Pembelian</div>
+    </div>
+    <div class="stat-card stat-card-amber">
+        <div class="stat-card-icon"><i class="fas fa-motorcycle"></i></div>
+        <div class="stat-card-value"><?= array_sum(array_column($pelanggan_list, 'jml_servis')) ?></div>
+        <div class="stat-card-label">Total Servis</div>
+    </div>
+</div>
+
+<?php if ($flash): ?><div class="alert alert-<?= $flash['type'] ?> animate-slide-down"><i class="fas fa-check-circle"></i> <?= $flash['msg'] ?></div><?php endif; ?>
+
+<div class="content-card">
+    <div class="content-card-header">
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+            <i class="fas fa-search text-gray-400"></i>
+            <input type="text" id="searchInput" placeholder="Cari pelanggan..." class="form-control py-2 px-3 w-full sm:w-64">
         </div>
+        <span class="text-sm text-gray-400">Total: <strong><?= $total_pelanggan ?></strong> pelanggan</span>
     </div>
-</div>
-
-<div class="card animate-fade-in-up" style="animation-delay:0.2s;opacity:0">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead><tr><th>No</th><th>Kode</th><th>Nama</th><th>No HP</th><th>Plat</th><th>Tipe Motor</th><th>Aksi</th></tr></thead>
-                <tbody id="data-container"><tr><td colspan="7" class="text-center py-5" style="color:#64748b"><i class="fas fa-spinner fa-spin mr-2"></i>Memuat...</td></tr></tbody>
+    <div class="content-card-body p-0">
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th style="width:45px">#</th>
+                        <th>Nama Pelanggan</th>
+                        <th>Kontak</th>
+                        <th>Transaksi</th>
+                        <th>Servis</th>
+                        <th>Total</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (count($pelanggan_list) > 0): $no=1; ?>
+                        <?php foreach($pelanggan_list as $r): 
+                            $total_trans = $r['jml_transaksi'] + $r['jml_servis'];
+                        ?>
+                        <tr>
+                            <td class="text-gray-400 text-xs"><?= $no++ ?></td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                        <?= strtoupper(substr($r['nama'], 0, 1)) ?>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-sm"><?= htmlspecialchars($r['nama']) ?></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="flex flex-col gap-0.5">
+                                    <?php if ($r['no_telepon']): ?>
+                                        <a href="tel:<?= htmlspecialchars($r['no_telepon']) ?>" class="text-xs text-indigo-500 hover:text-indigo-700 transition-colors">
+                                            <i class="fas fa-phone-alt mr-1" style="font-size:9px"></i><?= htmlspecialchars($r['no_telepon']) ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-xs text-gray-300">-</span>
+                                    <?php endif; ?>
+                                    <?php if ($r['alamat']): ?>
+                                        <span class="text-[10px] text-gray-400 truncate max-w-[180px]" title="<?= htmlspecialchars($r['alamat']) ?>">
+                                            <i class="fas fa-map-pin mr-1"></i><?= htmlspecialchars($r['alamat']) ?>
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-success text-[10px]"><?= $r['jml_transaksi'] ?>x</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-info text-[10px]"><?= $r['jml_servis'] ?>x</span>
+                            </td>
+                            <td class="font-semibold text-xs <?= $total_trans > 0 ? 'text-indigo-600' : 'text-gray-300' ?>">
+                                <?= $total_trans ?> transaksi
+                            </td>
+                            <td>
+                                <div class="flex gap-1 justify-center">
+                                    <button onclick="riwayatPelanggan(<?= $r['id'] ?>)" class="btn btn-sm btn-info" title="Lihat Riwayat"><i class="fas fa-clock-rotate"></i></button>
+                                    <button onclick='editPelanggan(<?= json_encode($r) ?>)' class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
+                                    <form method="POST" style="display:inline" onsubmit="return confirm('Hapus pelanggan <?= htmlspecialchars($r['nama']) ?>?')">
+                                        <input type="hidden" name="aksi" value="hapus">
+                                        <input type="hidden" name="id" value="<?= $r['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan="7" class="text-center py-16">
+                            <div class="inline-flex flex-col items-center">
+                                <div class="w-20 h-20 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
+                                    <i class="fas fa-users-slash text-3xl text-indigo-300"></i>
+                                </div>
+                                <h3 class="font-semibold text-gray-400 mb-1">Belum Ada Pelanggan</h3>
+                                <p class="text-sm text-gray-400 mb-4">Tambah pelanggan untuk mencatat transaksi</p>
+                                <button onclick="openModal('modalPelanggan')" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Tambah Pelanggan
+                                </button>
+                            </div>
+                        </td></tr>
+                    <?php endif; ?>
+                </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="formModal" tabindex="-1" role="dialog"><div class="modal-dialog modal-lg" role="document"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title" id="modal-title">Tambah Pelanggan</h5><button type="button" class="close" data-dismiss="modal"><span style="color:#94a3b8">&times;</span></button></div>
-    <div class="modal-body">
-        <form id="data-form" onsubmit="event.preventDefault();save()">
-            <input type="hidden" name="id" id="f-id">
-            <div class="row">
-                <div class="col-md-6"><div class="form-group"><label class="form-label" style="font-size:0.8rem">Nama <span class="text-danger">*</span></label><input type="text" class="form-control" name="nama" id="f-nama" required placeholder="Nama pelanggan"></div></div>
-                <div class="col-md-6"><div class="form-group"><label class="form-label" style="font-size:0.8rem">No HP</label><input type="text" class="form-control" name="no_hp" id="f-hp" placeholder="08xxx"></div></div>
+<div class="modal" id="modalRiwayat">
+    <div class="modal-backdrop" onclick="closeModal('modalRiwayat')"></div>
+    <div class="modal-content max-w-2xl">
+        <div class="modal-header">
+            <h3><i class="fas fa-clock-rotate text-indigo-500 mr-2"></i>Riwayat Transaksi</h3>
+            <button class="modal-close" onclick="closeModal('modalRiwayat')"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" id="riwayatContent">
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-2xl text-indigo-500"></i>
+                <p class="text-sm text-gray-400 mt-2">Memuat riwayat...</p>
             </div>
-            <div class="form-group"><label class="form-label" style="font-size:0.8rem">Alamat</label><textarea class="form-control" name="alamat" id="f-alamat" rows="2" placeholder="Alamat lengkap..."></textarea></div>
-            <div class="row">
-                <div class="col-md-4"><div class="form-group"><label class="form-label" style="font-size:0.8rem">Plat Nomor</label><input type="text" class="form-control" name="plat_nomor" id="f-plat" placeholder="B 1234 XX" style="text-transform:uppercase"></div></div>
-                <div class="col-md-4"><div class="form-group"><label class="form-label" style="font-size:0.8rem">Tipe Motor</label><input type="text" class="form-control" name="tipe_motor" id="f-tipe" placeholder="Contoh: Beat, Vario, Mio"></div></div>
-                <div class="col-md-4"><div class="form-group"><label class="form-label" style="font-size:0.8rem">Tahun</label><input type="number" class="form-control" name="tahun_motor" id="f-tahun" min="1990" max="2030" placeholder="2024"></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="modalPelanggan">
+    <div class="modal-backdrop" onclick="closeModal('modalPelanggan')"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah Pelanggan</h3>
+            <button class="modal-close" onclick="closeModal('modalPelanggan')"><i class="fas fa-times"></i></button>
+        </div>
+        <form method="POST">
+            <div class="modal-body">
+                <input type="hidden" name="aksi" id="formAksi" value="tambah">
+                <input type="hidden" name="id" id="formId" value="0">
+                <div class="form-group">
+                    <label class="form-label">Nama Pelanggan <span class="text-red-400">*</span></label>
+                    <input type="text" name="nama" id="formNama" class="form-control" required placeholder="Nama pelanggan">
+                </div>
+                <div class="form-row grid-cols-2">
+                    <div class="form-group">
+                        <label class="form-label">No. Telepon</label>
+                        <input type="text" name="no_telepon" id="formTelepon" class="form-control" placeholder="08xxxxxxxxxx">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Alamat</label>
+                    <textarea name="alamat" id="formAlamat" class="form-control" placeholder="Alamat lengkap"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeModal('modalPelanggan')">Batal</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan</button>
             </div>
         </form>
     </div>
-    <div class="modal-footer"><button class="btn btn-secondary" data-dismiss="modal"><i class="fas fa-times mr-1"></i> Batal</button><button class="btn btn-primary" onclick="save()"><i class="fas fa-save mr-1"></i> Simpan</button></div>
-</div></div></div>
+</div>
 
-<?php $extraScripts = '
-async function loadData(){
-    const c=document.getElementById("data-container");
-    const q=document.getElementById("search-input").value;
-    const res=await apiRequest("getPelanggan",{search:q},"GET");
-    if(res.status==="success"&&res.data&&res.data.length>0){
-        c.innerHTML=res.data.map((p,i)=>`<tr style="animation:fadeInUp 0.3s ease forwards;opacity:0;animation-delay:${i*0.03}s">
-            <td>${i+1}</td>
-            <td><span style="color:#0ea5e9;font-weight:600;font-size:0.8rem">${p.kode_pelanggan}</span></td>
-            <td><div class="font-semibold">${p.nama}</div>${p.alamat?`<small style="color:#64748b">${p.alamat.substring(0,40)}</small>`:""}</td>
-            <td>${p.no_hp||"-"}</td>
-            <td><span class="badge badge-info">${p.plat_nomor||"-"}</span></td>
-            <td>${p.tipe_motor||"-"} ${p.tahun_motor?"("+p.tahun_motor+")":""}</td>
-            <td><div class="btn-group btn-group-sm"><button class="btn btn-secondary" onclick="edit(${p.id})" title="Edit"><i class="fas fa-edit"></i></button><button class="btn btn-secondary" onclick="hapus(${p.id})" title="Hapus" style="color:#ef4444"><i class="fas fa-trash"></i></button></div></td>
-        </tr>`).join("");
-    } else { c.innerHTML=`<tr><td colspan="7" class="text-center py-5" style="color:#64748b"><i class="fas fa-users mb-3 d-block" style="font-size:2.5rem;opacity:0.3"></i><p>Belum ada data pelanggan</p></td></tr>`; }
+<script>
+function riwayatPelanggan(id) {
+    document.getElementById('riwayatContent').innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-indigo-500"></i><p class="text-sm text-gray-400 mt-2">Memuat riwayat...</p></div>';
+    openModal('modalRiwayat');
+    fetch('/Bengkel POS/ajax/riwayat_pelanggan.php?id=' + id)
+        .then(r => r.text())
+        .then(html => {
+            document.getElementById('riwayatContent').innerHTML = html;
+        })
+        .catch(() => document.getElementById('riwayatContent').innerHTML = '<div class="text-center py-8 text-red-400">Gagal memuat riwayat</div>');
 }
-function openForm(){
-    ["f-id","f-nama","f-hp","f-alamat","f-plat","f-tipe","f-tahun"].forEach(id=>document.getElementById(id).value="");
-    document.getElementById("modal-title").innerHTML="<i class=\\"fas fa-plus-circle mr-2\\" style=\\"color:#22c55e\\"></i>Tambah Pelanggan";
-    $("#formModal").modal("show");
+
+function switchRiwayatTab(tabId) {
+    document.querySelectorAll('#riwayatContent .riwayat-tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('#riwayatContent .tab-riwayat').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById(tabId);
+    if (target) target.style.display = 'block';
+    const btn = document.querySelector(`#riwayatContent .tab-riwayat[data-tab="${tabId}"]`);
+    if (btn) btn.classList.add('active');
 }
-async function edit(id){
-    const res=await apiRequest("getPelanggan",{},"GET");
-    if(res.status==="success"&&res.data){
-        const p=res.data.find(x=>x.id==id);if(!p)return;
-        document.getElementById("f-id").value=p.id;
-        document.getElementById("f-nama").value=p.nama;
-        document.getElementById("f-hp").value=p.no_hp||"";
-        document.getElementById("f-alamat").value=p.alamat||"";
-        document.getElementById("f-plat").value=p.plat_nomor||"";
-        document.getElementById("f-tipe").value=p.tipe_motor||"";
-        document.getElementById("f-tahun").value=p.tahun_motor||"";
-        document.getElementById("modal-title").innerHTML="<i class=\\"fas fa-edit mr-2\\" style=\\"color:#f59e0b\\"></i>Edit Pelanggan";
-        $("#formModal").modal("show");
-    }
+
+function editPelanggan(data) {
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit text-amber-500 mr-2"></i>Edit Pelanggan';
+    document.getElementById('formAksi').value = 'edit';
+    document.getElementById('formId').value = data.id;
+    document.getElementById('formNama').value = data.nama;
+    document.getElementById('formTelepon').value = data.no_telepon || '';
+    document.getElementById('formAlamat').value = data.alamat || '';
+    openModal('modalPelanggan');
 }
-async function save(){
-    const f=document.getElementById("data-form");
-    if(!f.checkValidity()){f.reportValidity();return;}
-    const d=Object.fromEntries(new FormData(f).entries());
-    const r=await apiRequest(d.id?"updatePelanggan":"addPelanggan",d);
-    if(r.status==="success"){showToast(r.message);$("#formModal").modal("hide");loadData();}
-    else showToast(r.message||"Gagal","error");
-}
-async function hapus(id){
-    if(!confirm("Yakin hapus pelanggan ini?"))return;
-    const r=await apiRequest("deletePelanggan",{id});
-    if(r.status==="success"){showToast("Dihapus");loadData();}else showToast(r.message||"Gagal","error");
-}
-loadData();
-'; ?>
+
+// Live search
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const keyword = this.value.toLowerCase();
+    document.querySelectorAll('#dataTable tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(keyword) ? '' : 'none';
+    });
+});
+</script>
+
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
