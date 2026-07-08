@@ -127,8 +127,8 @@ $total = mysqli_fetch_assoc($q_total);
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="/BengkelPOS/assets/js/jspdf.umd.min.js"></script>
+<script src="/BengkelPOS/assets/js/jspdf.plugin.autotable.min.js"></script>
 <script>
 function exportPDF() {
     const { jsPDF } = window.jspdf;

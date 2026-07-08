@@ -50,8 +50,7 @@ for ($i = 5; $i >= 0; $i--) {
 }
 ?>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.min.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="/BengkelPOS/assets/js/chart.umd.min.js"></script>
 
 <div class="page-header">
     <h1><i class="fas fa-chart-pie text-slate-700 mr-2"></i>Dashboard</h1>
