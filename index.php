@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (isset($_SESSION['user_id'])) {
-    header('Location: /Bengkel POS/dashboard.php');
+    header('Location: /BengkelPOS/dashboard.php');
     exit;
 }
 
@@ -45,9 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($app_name) ?> - Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="/BengkelPOS/assets/js/tailwind.min.js"></script>
+    <link rel="stylesheet" href="/BengkelPOS/assets/css/inter.css">
+    <link rel="stylesheet" href="/BengkelPOS/assets/css/all.min.css">
     <style>
         * { font-family: 'Inter', sans-serif; }
         body {
@@ -218,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Logo -->
         <div class="text-center mb-8">
             <?php if ($app_logo): ?>
-                <img src="/Bengkel POS/uploads/<?= htmlspecialchars($app_logo) ?>" alt="Logo" class="h-20 w-20 mx-auto object-contain mb-4 float-anim">
+                <img src="/BengkelPOS/uploads/<?= htmlspecialchars($app_logo) ?>" alt="Logo" class="h-20 w-20 mx-auto object-contain mb-4 float-anim">
             <?php else: ?>
                 <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-slate-700 to-slate-900 rounded-2xl shadow-lg mb-4 float-anim">
                     <i class="fas fa-wrench text-white text-3xl"></i>
