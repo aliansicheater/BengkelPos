@@ -44,7 +44,7 @@ $total_nilai = array_sum(array_column($supplier_list, 'total_pembelian'));
 
 <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1><i class="fas fa-truck text-indigo-600 mr-2"></i>Data Supplier</h1>
+        <h1><i class="fas fa-truck text-slate-700 mr-2"></i>Data Supplier</h1>
         <p>Kelola data supplier / pemasok sparepart & aksesoris</p>
     </div>
     <button onclick="openModal('modalSupplier')" class="btn btn-primary">
@@ -54,7 +54,7 @@ $total_nilai = array_sum(array_column($supplier_list, 'total_pembelian'));
 
 <!-- Stats -->
 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-    <div class="stat-card stat-card-indigo">
+    <div class="stat-card stat-card-slate">
         <div class="stat-card-icon"><i class="fas fa-truck"></i></div>
         <div class="stat-card-value"><?= $total_supplier ?></div>
         <div class="stat-card-label">Total Supplier</div>
@@ -108,7 +108,7 @@ $total_nilai = array_sum(array_column($supplier_list, 'total_pembelian'));
                             <td>
                                 <div class="flex flex-col gap-0.5">
                                     <?php if ($r['no_telepon']): ?>
-                                        <a href="tel:<?= htmlspecialchars($r['no_telepon']) ?>" class="text-xs text-indigo-500 hover:text-indigo-700">
+                                        <a href="tel:<?= htmlspecialchars($r['no_telepon']) ?>" class="text-xs text-slate-600 hover:text-slate-800">
                                             <i class="fas fa-phone-alt mr-1" style="font-size:9px"></i><?= htmlspecialchars($r['no_telepon']) ?>
                                         </a>
                                     <?php else: ?>
@@ -122,7 +122,7 @@ $total_nilai = array_sum(array_column($supplier_list, 'total_pembelian'));
                                 </div>
                             </td>
                             <td><span class="badge badge-info text-[10px]"><?= $r['jml_pembelian'] ?>x</span></td>
-                            <td class="text-indigo-600 font-semibold text-xs"><?= rupiah($r['total_pembelian']) ?></td>
+                            <td class="text-slate-700 font-semibold text-xs"><?= rupiah($r['total_pembelian']) ?></td>
                             <td>
                                 <div class="flex gap-1 justify-center">
                                     <button onclick='editSupplier(<?= json_encode($r) ?>)' class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
@@ -159,7 +159,7 @@ $total_nilai = array_sum(array_column($supplier_list, 'total_pembelian'));
     <div class="modal-backdrop" onclick="closeModal('modalSupplier')"></div>
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalTitle"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah Supplier</h3>
+            <h3 id="modalTitle"><i class="fas fa-plus-circle text-slate-600 mr-2"></i>Tambah Supplier</h3>
             <button class="modal-close" onclick="closeModal('modalSupplier')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST">

@@ -54,13 +54,13 @@ for ($i = 5; $i >= 0; $i--) {
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
 <div class="page-header">
-    <h1><i class="fas fa-chart-pie text-indigo-600 mr-2"></i>Dashboard</h1>
+    <h1><i class="fas fa-chart-pie text-slate-700 mr-2"></i>Dashboard</h1>
     <p>Selamat datang, <?= htmlspecialchars($_SESSION['nama_lengkap']) ?>! Ringkasan bisnis hari ini.</p>
 </div>
 
 <!-- Stats Cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <div class="stat-card stat-card-indigo">
+    <div class="stat-card stat-card-slate">
         <div class="stat-card-icon"><i class="fas fa-shopping-cart"></i></div>
         <div class="stat-card-value"><?= rupiah($penjualan['total']) ?></div>
         <div class="stat-card-label">Penjualan Hari Ini (<?= $penjualan['count'] ?> transaksi)</div>
@@ -87,7 +87,7 @@ for ($i = 5; $i >= 0; $i--) {
     <!-- Line Chart: 30 Hari -->
     <div class="content-card">
         <div class="content-card-header">
-            <h2><i class="fas fa-chart-line text-indigo-500 mr-2"></i>Penjualan 30 Hari</h2>
+            <h2><i class="fas fa-chart-line text-slate-600 mr-2"></i>Penjualan 30 Hari</h2>
             <span class="text-xs text-gray-400">Total per hari</span>
         </div>
         <div class="content-card-body">
@@ -122,7 +122,7 @@ for ($i = 5; $i >= 0; $i--) {
     <!-- Recent Transactions -->
     <div class="content-card">
         <div class="content-card-header">
-            <h2><i class="fas fa-clock-rotate text-indigo-500 mr-2"></i>Transaksi Terakhir</h2>
+            <h2><i class="fas fa-history text-slate-600 mr-2"></i>Transaksi Terakhir</h2>
             <a href="laporan/index.php" class="btn btn-sm btn-outline">Lihat Semua</a>
         </div>
         <div class="content-card-body p-0">
@@ -186,12 +186,12 @@ new Chart(ctx1, {
         datasets: [{
             label: 'Penjualan (Rp)',
             data: <?= json_encode($chart_data) ?>,
-            borderColor: '#4F46E5',
+            borderColor: '#1E293B',
             backgroundColor: 'rgba(79, 70, 229, 0.1)',
             fill: true,
             tension: 0.3,
             pointRadius: 3,
-            pointBackgroundColor: '#4F46E5',
+            pointBackgroundColor: '#1E293B',
             borderWidth: 2
         }]
     },
@@ -275,7 +275,7 @@ new Chart(ctx3, {
         labels: ['Penjualan Barang', 'Service Motor'],
         datasets: [{
             data: [totalPjl || 1, totalSrv || 1],
-            backgroundColor: ['#4F46E5', '#F59E0B'],
+            backgroundColor: ['#475569', '#94A3B8'],
             borderWidth: 0,
             hoverOffset: 8
         }]

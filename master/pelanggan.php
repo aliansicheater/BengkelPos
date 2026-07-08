@@ -42,7 +42,7 @@ while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
 
 <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1><i class="fas fa-users text-indigo-600 mr-2"></i>Data Pelanggan</h1>
+        <h1><i class="fas fa-users text-slate-700 mr-2"></i>Data Pelanggan</h1>
         <p>Kelola data pelanggan dan lihat riwayat transaksi</p>
     </div>
     <button onclick="openModal('modalPelanggan')" class="btn btn-primary">
@@ -52,7 +52,7 @@ while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
 
 <!-- Stats -->
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-    <div class="stat-card stat-card-indigo">
+    <div class="stat-card stat-card-slate">
         <div class="stat-card-icon"><i class="fas fa-users"></i></div>
         <div class="stat-card-value"><?= $total_pelanggan ?></div>
         <div class="stat-card-label">Total Pelanggan</div>
@@ -102,7 +102,7 @@ while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
                             <td class="text-gray-400 text-xs"><?= $no++ ?></td>
                             <td>
                                 <div class="flex items-center gap-2">
-                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                                         <?= strtoupper(substr($r['nama'], 0, 1)) ?>
                                     </div>
                                     <div>
@@ -113,7 +113,7 @@ while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
                             <td>
                                 <div class="flex flex-col gap-0.5">
                                     <?php if ($r['no_telepon']): ?>
-                                        <a href="tel:<?= htmlspecialchars($r['no_telepon']) ?>" class="text-xs text-indigo-500 hover:text-indigo-700 transition-colors">
+                                        <a href="tel:<?= htmlspecialchars($r['no_telepon']) ?>" class="text-xs text-slate-600 hover:text-slate-800 transition-colors">
                                             <i class="fas fa-phone-alt mr-1" style="font-size:9px"></i><?= htmlspecialchars($r['no_telepon']) ?>
                                         </a>
                                     <?php else: ?>
@@ -132,12 +132,12 @@ while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
                             <td>
                                 <span class="badge badge-info text-[10px]"><?= $r['jml_servis'] ?>x</span>
                             </td>
-                            <td class="font-semibold text-xs <?= $total_trans > 0 ? 'text-indigo-600' : 'text-gray-300' ?>">
+                            <td class="font-semibold text-xs <?= $total_trans > 0 ? 'text-slate-700' : 'text-gray-300' ?>">
                                 <?= $total_trans ?> transaksi
                             </td>
                             <td>
                                 <div class="flex gap-1 justify-center">
-                                    <button onclick="riwayatPelanggan(<?= $r['id'] ?>)" class="btn btn-sm btn-info" title="Lihat Riwayat"><i class="fas fa-clock-rotate"></i></button>
+                                    <button onclick="riwayatPelanggan(<?= $r['id'] ?>)" class="btn btn-sm btn-info" title="Lihat Riwayat"><i class="fas fa-history"></i></button>
                                     <button onclick='editPelanggan(<?= json_encode($r) ?>)' class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></button>
                                     <form method="POST" style="display:inline" onsubmit="return confirm('Hapus pelanggan <?= htmlspecialchars($r['nama']) ?>?')">
                                         <input type="hidden" name="aksi" value="hapus">
@@ -151,8 +151,8 @@ while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
                     <?php else: ?>
                         <tr><td colspan="7" class="text-center py-16">
                             <div class="inline-flex flex-col items-center">
-                                <div class="w-20 h-20 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
-                                    <i class="fas fa-users-slash text-3xl text-indigo-300"></i>
+                                <div class="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                                    <i class="fas fa-users-slash text-3xl text-slate-400"></i>
                                 </div>
                                 <h3 class="font-semibold text-gray-400 mb-1">Belum Ada Pelanggan</h3>
                                 <p class="text-sm text-gray-400 mb-4">Tambah pelanggan untuk mencatat transaksi</p>
@@ -172,12 +172,12 @@ while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
     <div class="modal-backdrop" onclick="closeModal('modalRiwayat')"></div>
     <div class="modal-content max-w-2xl">
         <div class="modal-header">
-            <h3><i class="fas fa-clock-rotate text-indigo-500 mr-2"></i>Riwayat Transaksi</h3>
+            <h3><i class="fas fa-history text-slate-600 mr-2"></i>Riwayat Transaksi</h3>
             <button class="modal-close" onclick="closeModal('modalRiwayat')"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body" id="riwayatContent">
             <div class="text-center py-8">
-                <i class="fas fa-spinner fa-spin text-2xl text-indigo-500"></i>
+                <i class="fas fa-spinner fa-spin text-2xl text-slate-600"></i>
                 <p class="text-sm text-gray-400 mt-2">Memuat riwayat...</p>
             </div>
         </div>
@@ -188,7 +188,7 @@ while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
     <div class="modal-backdrop" onclick="closeModal('modalPelanggan')"></div>
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalTitle"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah Pelanggan</h3>
+            <h3 id="modalTitle"><i class="fas fa-plus-circle text-slate-600 mr-2"></i>Tambah Pelanggan</h3>
             <button class="modal-close" onclick="closeModal('modalPelanggan')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST">
@@ -220,7 +220,7 @@ while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
 
 <script>
 function riwayatPelanggan(id) {
-    document.getElementById('riwayatContent').innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-indigo-500"></i><p class="text-sm text-gray-400 mt-2">Memuat riwayat...</p></div>';
+    document.getElementById('riwayatContent').innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-slate-600"></i><p class="text-sm text-gray-400 mt-2">Memuat riwayat...</p></div>';
     openModal('modalRiwayat');
     fetch('/Bengkel POS/ajax/riwayat_pelanggan.php?id=' + id)
         .then(r => r.text())

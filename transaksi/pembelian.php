@@ -53,7 +53,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
 ?>
 
 <div class="page-header">
-    <h1><i class="fas fa-truck-loading text-indigo-600 mr-2"></i>Pembelian / Restok Barang</h1>
+    <h1><i class="fas fa-truck-loading text-slate-700 mr-2"></i>Pembelian / Restok Barang</h1>
     <p>Catat pembelian barang dari supplier dan update stok</p>
 </div>
 
@@ -64,7 +64,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
     <div class="lg:col-span-3">
         <div class="content-card">
             <div class="content-card-header">
-                <h2><i class="fas fa-box text-indigo-500 mr-2"></i>Pilih Barang</h2>
+                <h2><i class="fas fa-box text-slate-600 mr-2"></i>Pilih Barang</h2>
                 <input type="text" id="searchBarang" placeholder="Cari barang..." class="form-control py-2 px-3 w-48">
             </div>
             <div class="content-card-body p-0">
@@ -132,9 +132,9 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
                     <input type="hidden" name="items_json" id="inputItems">
 
                     <div class="mt-4 space-y-3">
-                        <div class="flex justify-between items-center py-2 border-t-2 border-indigo-200">
+                        <div class="flex justify-between items-center py-2 border-t-2 border-slate-300">
                             <span class="font-bold text-lg">Total</span>
-                            <span class="font-extrabold text-2xl text-indigo-600" id="displayTotal">Rp 0</span>
+                            <span class="font-extrabold text-2xl text-slate-700" id="displayTotal">Rp 0</span>
                         </div>
                         <button type="submit" class="btn btn-success btn-lg w-full">
                             <i class="fas fa-check-circle"></i> Proses Pembelian

@@ -44,12 +44,12 @@ while($r = mysqli_fetch_assoc($q)) {
 $total_mekanik = count($mekanik_list);
 $total_servis = array_sum(array_column($mekanik_list, 'jml_servis'));
 
-$warna = ['#4F46E5', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#F97316'];
+$warna = ['#1E293B', '#F59E0B', '#10B981', '#EF4444', '#64748B', '#EC4899', '#06B6D4', '#F97316'];
 ?>
 
 <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1><i class="fas fa-user-gear text-indigo-600 mr-2"></i>Data Mekanik</h1>
+        <h1><i class="fas fa-user-gear text-slate-700 mr-2"></i>Data Mekanik</h1>
         <p>Kelola data mekanik dan pantau produktivitas servis</p>
     </div>
     <button onclick="openModal('modalMekanik')" class="btn btn-primary">
@@ -59,7 +59,7 @@ $warna = ['#4F46E5', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#EC4899', '#06
 
 <!-- Stats -->
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-    <div class="stat-card stat-card-indigo">
+    <div class="stat-card stat-card-slate">
         <div class="stat-card-icon"><i class="fas fa-user-gear"></i></div>
         <div class="stat-card-value"><?= $total_mekanik ?></div>
         <div class="stat-card-label">Total Mekanik</div>
@@ -120,7 +120,7 @@ $warna = ['#4F46E5', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#EC4899', '#06
                             <td>
                                 <div class="flex flex-col gap-0.5">
                                     <?php if ($r['no_telepon']): ?>
-                                        <a href="tel:<?= htmlspecialchars($r['no_telepon']) ?>" class="text-xs text-indigo-500 hover:text-indigo-700">
+                                        <a href="tel:<?= htmlspecialchars($r['no_telepon']) ?>" class="text-xs text-slate-600 hover:text-slate-800">
                                             <i class="fas fa-phone-alt mr-1" style="font-size:9px"></i><?= htmlspecialchars($r['no_telepon']) ?>
                                         </a>
                                     <?php else: ?>
@@ -191,7 +191,7 @@ $warna = ['#4F46E5', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6', '#EC4899', '#06
     <div class="modal-backdrop" onclick="closeModal('modalMekanik')"></div>
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalTitle"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah Mekanik</h3>
+            <h3 id="modalTitle"><i class="fas fa-plus-circle text-slate-600 mr-2"></i>Tambah Mekanik</h3>
             <button class="modal-close" onclick="closeModal('modalMekanik')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST">

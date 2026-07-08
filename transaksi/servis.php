@@ -72,7 +72,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
 ?>
 
 <div class="page-header">
-    <h1><i class="fas fa-motorcycle text-indigo-600 mr-2"></i>Service Motor</h1>
+    <h1><i class="fas fa-motorcycle text-slate-700 mr-2"></i>Service Motor</h1>
     <p>Catat service motor dengan jasa dan mekanik</p>
 </div>
 
@@ -84,7 +84,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
         <!-- Data Motor -->
         <div class="content-card mb-4">
             <div class="content-card-header">
-                <h2><i class="fas fa-motorcycle text-indigo-500 mr-2"></i>Data Motor</h2>
+                <h2><i class="fas fa-motorcycle text-slate-600 mr-2"></i>Data Motor</h2>
             </div>
             <div class="content-card-body">
                 <div class="form-row grid-cols-1 sm:grid-cols-3">
@@ -116,7 +116,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
         <!-- Pilih Jasa Servis -->
         <div class="content-card mb-4">
             <div class="content-card-header">
-                <h2><i class="fas fa-screwdriver-wrench text-indigo-500 mr-2"></i>Pilih Jasa Servis</h2>
+                <h2><i class="fas fa-screwdriver-wrench text-slate-600 mr-2"></i>Pilih Jasa Servis</h2>
                 <input type="text" id="searchJasa" placeholder="Cari jasa..." class="form-control py-2 px-3 w-48">
             </div>
             <div class="content-card-body p-0">
@@ -135,7 +135,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
                             <tr>
                                 <td class="font-medium"><?= htmlspecialchars($j['nama_jasa']) ?></td>
                                 <td><?= rupiah($j['upah_mekanik']) ?></td>
-                                <td class="font-semibold text-indigo-600"><?= rupiah($j['harga_jual']) ?></td>
+                                <td class="font-semibold text-slate-700"><?= rupiah($j['harga_jual']) ?></td>
                                 <td class="text-center">
                                     <button onclick="tambahItem('jasa', <?= $j['id'] ?>, '<?= htmlspecialchars($j['nama_jasa'], ENT_QUOTES) ?>', <?= $j['harga_jual'] ?>, <?= $j['upah_mekanik'] ?>)" 
                                             class="btn btn-sm btn-primary"><i class="fas fa-plus"></i></button>
@@ -151,7 +151,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
         <!-- Pilih Barang -->
         <div class="content-card">
             <div class="content-card-header">
-                <h2><i class="fas fa-box text-indigo-500 mr-2"></i>Pilih Barang (Sparepart)</h2>
+                <h2><i class="fas fa-box text-slate-600 mr-2"></i>Pilih Barang (Sparepart)</h2>
                 <input type="text" id="searchBarang" placeholder="Cari barang..." class="form-control py-2 px-3 w-48">
             </div>
             <div class="content-card-body p-0">
@@ -169,7 +169,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
                             <?php while($b = mysqli_fetch_assoc($q_barang)): ?>
                             <tr>
                                 <td class="font-medium"><?= htmlspecialchars($b['nama_barang']) ?></td>
-                                <td class="font-semibold text-indigo-600"><?= rupiah($b['harga_jual']) ?></td>
+                                <td class="font-semibold text-slate-700"><?= rupiah($b['harga_jual']) ?></td>
                                 <td><span class="badge <?= $b['stok'] <= 5 ? 'badge-danger' : 'badge-success' ?>"><?= $b['stok'] ?></span></td>
                                 <td class="text-center">
                                     <button onclick="tambahItem('barang', <?= $b['id'] ?>, '<?= htmlspecialchars($b['nama_barang'], ENT_QUOTES) ?>', <?= $b['harga_jual'] ?>, 0, <?= $b['stok'] ?>)" 
@@ -215,15 +215,15 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
                     <div class="mt-4 space-y-3">
                         <div class="flex justify-between text-sm">
                             <span>Total Jasa</span>
-                            <span class="font-semibold text-indigo-600" id="displayTotalJasa">Rp 0</span>
+                            <span class="font-semibold text-slate-700" id="displayTotalJasa">Rp 0</span>
                         </div>
                         <div class="flex justify-between text-sm">
                             <span>Total Barang</span>
-                            <span class="font-semibold text-indigo-600" id="displayTotalBarang">Rp 0</span>
+                            <span class="font-semibold text-slate-700" id="displayTotalBarang">Rp 0</span>
                         </div>
-                        <div class="flex justify-between items-center py-2 border-t-2 border-indigo-200">
+                        <div class="flex justify-between items-center py-2 border-t-2 border-slate-300">
                             <span class="font-bold text-lg">Grand Total</span>
-                            <span class="font-extrabold text-2xl text-indigo-600" id="displayGrandTotal">Rp 0</span>
+                            <span class="font-extrabold text-2xl text-slate-700" id="displayGrandTotal">Rp 0</span>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Nominal Bayar</label>

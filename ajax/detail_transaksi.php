@@ -42,7 +42,7 @@ if ($tipe === 'Penjualan') {
     </table>
     <div class="flex justify-between items-center mt-4 pt-3 border-t font-bold text-lg">
         <span>Total</span>
-        <span class="text-indigo-600"><?= rupiah($data['total']) ?></span>
+        <span class="text-slate-700"><?= rupiah($data['total']) ?></span>
     </div>
     <div class="flex justify-between text-sm mt-1"><span class="text-gray-400">Bayar</span><span><?= rupiah($data['bayar']) ?></span></div>
     <div class="flex justify-between text-sm"><span class="text-gray-400">Kembalian</span><span class="text-green-600 font-semibold"><?= rupiah($data['kembalian']) ?></span></div>
@@ -89,7 +89,7 @@ if ($tipe === 'Penjualan') {
     <div class="flex justify-between text-sm"><span class="text-gray-400">Total Barang</span><span><?= rupiah($data['total_barang']) ?></span></div>
     <div class="flex justify-between items-center mt-2 pt-3 border-t font-bold text-lg">
         <span>Grand Total</span>
-        <span class="text-indigo-600"><?= rupiah($data['grand_total']) ?></span>
+        <span class="text-slate-700"><?= rupiah($data['grand_total']) ?></span>
     </div>
     <div class="flex justify-between text-sm mt-1"><span class="text-gray-400">Bayar</span><span><?= rupiah($data['bayar']) ?></span></div>
     <div class="flex justify-between text-sm"><span class="text-gray-400">Kembalian</span><span class="text-green-600 font-semibold"><?= rupiah($data['kembalian']) ?></span></div>

@@ -18,12 +18,12 @@ $stok_menipis = mysqli_fetch_assoc($q_stok_menipis);
 ?>
 
 <div class="page-header">
-    <h1><i class="fas fa-warehouse text-indigo-600 mr-2"></i>Laporan Stok Barang</h1>
+    <h1><i class="fas fa-warehouse text-slate-700 mr-2"></i>Laporan Stok Barang</h1>
     <p>Informasi stok dan nilai barang</p>
 </div>
 
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-    <div class="stat-card stat-card-indigo">
+    <div class="stat-card stat-card-slate">
         <div class="stat-card-icon"><i class="fas fa-box"></i></div>
         <div class="stat-card-value"><?= $total['total'] ?></div>
         <div class="stat-card-label">Total Item Barang</div>
@@ -79,7 +79,7 @@ $stok_menipis = mysqli_fetch_assoc($q_stok_menipis);
                         </td>
                         <td><?= $b['stok_minimal'] ?></td>
                         <td><?= rupiah($b['harga_beli']) ?></td>
-                        <td class="font-semibold text-indigo-600"><?= rupiah($b['harga_jual']) ?></td>
+                        <td class="font-semibold text-slate-700"><?= rupiah($b['harga_jual']) ?></td>
                         <td><?= rupiah($nilai_stok) ?></td>
                     </tr>
                     <?php endwhile; ?>

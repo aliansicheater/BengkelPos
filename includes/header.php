@@ -29,6 +29,11 @@ $app_logo = $setting['logo'] ?? null;
     <link rel="stylesheet" href="/Bengkel POS/assets/css/style.css">
 </head>
 <body>
+<!-- Doodle Background -->
+<div class="doodle-bg">
+    <div class="doodle-svg"></div>
+</div>
+<div class="doodle-overlay"></div>
 
 <!-- Sidebar Overlay -->
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
@@ -107,7 +112,7 @@ $app_logo = $setting['logo'] ?? null;
             <span>Pembelian / Restok</span>
         </a>
         <a href="/Bengkel POS/transaksi/histori.php" class="sidebar-item <?= ($current_page == 'histori.php') ? 'active' : '' ?>">
-            <i class="fas fa-clock-rotate"></i>
+            <i class="fas fa-history"></i>
             <span>Histori Transaksi</span>
         </a>
 

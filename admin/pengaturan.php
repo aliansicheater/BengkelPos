@@ -115,7 +115,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
 
 <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1><i class="fas fa-gear text-indigo-600 mr-2"></i>Pengaturan Aplikasi</h1>
+        <h1><i class="fas fa-gear text-slate-700 mr-2"></i>Pengaturan Aplikasi</h1>
         <p>Atur nama aplikasi, logo, serta backup & restore database</p>
     </div>
 </div>
@@ -127,7 +127,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
     <!-- Card: Informasi Aplikasi -->
     <div class="content-card">
         <div class="content-card-header">
-            <h3><i class="fas fa-info-circle text-indigo-500 mr-2"></i>Informasi Aplikasi</h3>
+            <h3><i class="fas fa-info-circle text-slate-600 mr-2"></i>Informasi Aplikasi</h3>
         </div>
         <div class="content-card-body">
             <form method="POST" enctype="multipart/form-data">
@@ -158,12 +158,12 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
     <!-- Card: Backup & Restore -->
     <div class="content-card">
         <div class="content-card-header">
-            <h3><i class="fas fa-database text-indigo-500 mr-2"></i>Backup & Restore Database</h3>
+            <h3><i class="fas fa-database text-slate-600 mr-2"></i>Backup & Restore Database</h3>
         </div>
         <div class="content-card-body space-y-4">
-            <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl">
+            <div class="p-4 bg-slate-100 dark:bg-slate-800/50 rounded-xl">
                 <h4 class="font-semibold text-sm mb-1 flex items-center gap-2">
-                    <i class="fas fa-download text-indigo-500"></i> Backup Database
+                    <i class="fas fa-download text-slate-600"></i> Backup Database
                 </h4>
                 <p class="text-xs text-gray-400 mb-3">Download file SQL untuk menyimpan cadangan seluruh data.</p>
                 <form method="POST">

@@ -53,7 +53,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
 
 <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1><i class="fas fa-shield-halved text-indigo-600 mr-2"></i>Manajemen User</h1>
+        <h1><i class="fas fa-shield-halved text-slate-700 mr-2"></i>Manajemen User</h1>
         <p>Kelola akun pengguna aplikasi (Admin only)</p>
     </div>
     <button onclick="openModal('modalUser')" class="btn btn-primary">
@@ -94,7 +94,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
                                     <?php endif; ?>
                                 </span>
                                 <?php if ($r['password_plain']): ?>
-                                    <button onclick="togglePass('pass-<?= $r['id'] ?>')" class="text-gray-400 hover:text-indigo-500 transition-colors ml-1" title="Lihat/Sembunyikan">
+                                    <button onclick="togglePass('pass-<?= $r['id'] ?>')" class="text-gray-400 hover:text-slate-600 transition-colors ml-1" title="Lihat/Sembunyikan">
                                         <i class="fas fa-eye text-[10px]"></i>
                                     </button>
                                 <?php endif; ?>
@@ -132,7 +132,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
     <div class="modal-backdrop" onclick="closeModal('modalUser')"></div>
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalTitle"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah User</h3>
+            <h3 id="modalTitle"><i class="fas fa-plus-circle text-slate-600 mr-2"></i>Tambah User</h3>
             <button class="modal-close" onclick="closeModal('modalUser')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST">

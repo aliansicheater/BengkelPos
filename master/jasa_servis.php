@@ -49,7 +49,7 @@ $icons = ['wrench', 'oil-can', 'car-battery', 'fan', 'filter', 'gear', 'droplet'
 
 <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1><i class="fas fa-screwdriver-wrench text-indigo-600 mr-2"></i>Jasa Servis</h1>
+        <h1><i class="fas fa-screwdriver-wrench text-slate-700 mr-2"></i>Jasa Servis</h1>
         <p>Daftar jasa servis dengan upah mekanik dan harga jual</p>
     </div>
     <button onclick="openModal('modalJasa')" class="btn btn-primary">
@@ -59,7 +59,7 @@ $icons = ['wrench', 'oil-can', 'car-battery', 'fan', 'filter', 'gear', 'droplet'
 
 <!-- Stats -->
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-    <div class="stat-card stat-card-indigo">
+    <div class="stat-card stat-card-slate">
         <div class="stat-card-icon"><i class="fas fa-screwdriver-wrench"></i></div>
         <div class="stat-card-value"><?= $total_jasa ?></div>
         <div class="stat-card-label">Total Jasa</div>
@@ -124,7 +124,7 @@ $icons = ['wrench', 'oil-can', 'car-battery', 'fan', 'filter', 'gear', 'droplet'
                                 </div>
                             </td>
                             <td class="text-gray-600 text-xs"><?= rupiah($r['upah_mekanik']) ?></td>
-                            <td class="font-semibold text-indigo-600 text-sm"><?= rupiah($r['harga_jual']) ?></td>
+                            <td class="font-semibold text-slate-700 text-sm"><?= rupiah($r['harga_jual']) ?></td>
                             <td>
                                 <span class="badge <?= $laba > 0 ? 'badge-success' : 'badge-danger' ?> text-[10px]">
                                     <?= rupiah($laba) ?> (<?= $margin_persen ?>%)
@@ -167,7 +167,7 @@ $icons = ['wrench', 'oil-can', 'car-battery', 'fan', 'filter', 'gear', 'droplet'
     <div class="modal-backdrop" onclick="closeModal('modalJasa')"></div>
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalTitle"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah Jasa Servis</h3>
+            <h3 id="modalTitle"><i class="fas fa-plus-circle text-slate-600 mr-2"></i>Tambah Jasa Servis</h3>
             <button class="modal-close" onclick="closeModal('modalJasa')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST">

@@ -74,7 +74,7 @@ if ($tipe === 'servis') {
             font-weight: 800;
             color: #1E293B;
         }
-        .header h1 span { color: #4F46E5; }
+        .header h1 span { color: #1E293B; }
         .header p {
             font-size: 0.75rem;
             color: #64748B;
@@ -122,7 +122,7 @@ if ($tipe === 'servis') {
         .grand-total {
             font-size: 1.25rem;
             font-weight: 800;
-            color: #4F46E5;
+            color: #1E293B;
             border-top: 2px solid #1E293B;
             padding-top: 0.5rem;
             margin-top: 0.25rem;
@@ -141,7 +141,7 @@ if ($tipe === 'servis') {
             display: block;
             width: 100%;
             padding: 0.75rem;
-            background: #4F46E5;
+            background: #1E293B;
             color: white;
             border: none;
             border-radius: 10px;

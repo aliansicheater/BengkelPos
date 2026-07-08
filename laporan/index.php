@@ -28,7 +28,7 @@ $total = mysqli_fetch_assoc($q_total);
 
 <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1><i class="fas fa-file-invoice text-indigo-600 mr-2"></i>Laporan Penjualan</h1>
+        <h1><i class="fas fa-file-invoice text-slate-700 mr-2"></i>Laporan Penjualan</h1>
         <p>Rekap transaksi penjualan barang</p>
     </div>
     <div class="flex gap-2">
@@ -74,7 +74,7 @@ $total = mysqli_fetch_assoc($q_total);
 </div>
 
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-    <div class="stat-card stat-card-indigo">
+    <div class="stat-card stat-card-slate">
         <div class="stat-card-icon"><i class="fas fa-money-bill"></i></div>
         <div class="stat-card-value"><?= rupiah($total['total']) ?></div>
         <div class="stat-card-label">Total Penjualan</div>

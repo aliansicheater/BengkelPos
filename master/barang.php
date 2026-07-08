@@ -63,7 +63,7 @@ unset($_SESSION['flash']);
 
 <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1><i class="fas fa-boxes-stacked text-indigo-600 mr-2"></i>Data Barang</h1>
+        <h1><i class="fas fa-boxes-stacked text-slate-700 mr-2"></i>Data Barang</h1>
         <p>Kelola stok, harga, dan kategori sparepart & aksesoris</p>
     </div>
     <button onclick="openModal('modalBarang')" class="btn btn-primary">
@@ -73,7 +73,7 @@ unset($_SESSION['flash']);
 
 <!-- Stats Row -->
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-    <div class="stat-card stat-card-indigo">
+    <div class="stat-card stat-card-slate">
         <div class="stat-card-icon"><i class="fas fa-box"></i></div>
         <div class="stat-card-value"><?= $total_item ?></div>
         <div class="stat-card-label">Total Item</div>
@@ -136,7 +136,7 @@ unset($_SESSION['flash']);
                             <td class="text-gray-400 text-xs"><?= $no++ ?></td>
                             <td>
                                 <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-100 to-indigo-50 flex items-center justify-center text-indigo-500 text-xs font-bold flex-shrink-0">
+                                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-200 to-slate-100 flex items-center justify-center text-slate-600 text-xs font-bold flex-shrink-0">
                                         <i class="fas fa-box"></i>
                                     </div>
                                     <div>
@@ -147,7 +147,7 @@ unset($_SESSION['flash']);
                             </td>
                             <td><span class="badge badge-info text-[10px]"><?= htmlspecialchars($b['nama_kategori'] ?? '-') ?></span></td>
                             <td class="text-gray-500 text-xs"><?= rupiah($b['harga_beli']) ?></td>
-                            <td class="font-semibold text-indigo-600 text-sm"><?= rupiah($b['harga_jual']) ?></td>
+                            <td class="font-semibold text-slate-700 text-sm"><?= rupiah($b['harga_jual']) ?></td>
                             <td>
                                 <span class="badge <?= $margin > 0 ? 'badge-success' : 'badge-danger' ?> text-[10px]">
                                     <?= rupiah($margin) ?> (<?= $margin_persen ?>%)
@@ -182,8 +182,8 @@ unset($_SESSION['flash']);
                         <tr>
                             <td colspan="8" class="text-center py-16">
                                 <div class="inline-flex flex-col items-center">
-                                    <div class="w-20 h-20 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
-                                        <i class="fas fa-box-open text-3xl text-indigo-300"></i>
+                                    <div class="w-20 h-20 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+                                        <i class="fas fa-box-open text-3xl text-slate-400"></i>
                                     </div>
                                     <h3 class="font-semibold text-gray-400 mb-1">Belum Ada Barang</h3>
                                     <p class="text-sm text-gray-400 mb-4">Klik "Tambah Barang" untuk mulai menambahkan sparepart</p>
@@ -205,7 +205,7 @@ unset($_SESSION['flash']);
     <div class="modal-backdrop" onclick="closeModal('modalBarang')"></div>
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalBarangTitle"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah Barang</h3>
+            <h3 id="modalBarangTitle"><i class="fas fa-plus-circle text-slate-600 mr-2"></i>Tambah Barang</h3>
             <button class="modal-close" onclick="closeModal('modalBarang')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST">
@@ -290,7 +290,7 @@ document.getElementById('modalBarang').addEventListener('click', function(e) {
 });
 
 function resetModalBarang() {
-    document.getElementById('modalBarangTitle').innerHTML = '<i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah Barang';
+    document.getElementById('modalBarangTitle').innerHTML = '<i class="fas fa-plus-circle text-slate-600 mr-2"></i>Tambah Barang';
     document.getElementById('formAksi').value = 'tambah';
     document.getElementById('formId').value = '0';
     document.getElementById('formKode').value = '';

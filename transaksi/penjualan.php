@@ -61,7 +61,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
 ?>
 
 <div class="page-header">
-    <h1><i class="fas fa-cart-shopping text-indigo-600 mr-2"></i>Transaksi Penjualan</h1>
+    <h1><i class="fas fa-cart-shopping text-slate-700 mr-2"></i>Transaksi Penjualan</h1>
     <p>Buat transaksi penjualan barang ke pelanggan</p>
 </div>
 
@@ -72,7 +72,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
     <div class="lg:col-span-3">
         <div class="content-card">
             <div class="content-card-header">
-                <h2><i class="fas fa-box text-indigo-500 mr-2"></i>Pilih Barang</h2>
+                <h2><i class="fas fa-box text-slate-600 mr-2"></i>Pilih Barang</h2>
                 <input type="text" id="searchBarang" placeholder="Cari barang..." class="form-control py-2 px-3 w-48">
             </div>
             <div class="content-card-body p-0">
@@ -92,7 +92,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
                             <tr>
                                 <td class="font-medium"><?= htmlspecialchars($b['nama_barang']) ?></td>
                                 <td><?= htmlspecialchars($b['nama_kategori'] ?? '-') ?></td>
-                                <td class="font-semibold text-indigo-600"><?= rupiah($b['harga_jual']) ?></td>
+                                <td class="font-semibold text-slate-700"><?= rupiah($b['harga_jual']) ?></td>
                                 <td><span class="badge <?= $b['stok'] <= 5 ? 'badge-danger' : 'badge-success' ?>"><?= $b['stok'] ?></span></td>
                                 <td class="text-center">
                                     <button onclick="tambahKeKeranjang(<?= $b['id'] ?>, '<?= htmlspecialchars($b['nama_barang'], ENT_QUOTES) ?>', <?= $b['harga_jual'] ?>, <?= $b['stok'] ?>)" 
@@ -148,9 +148,9 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
                     <input type="hidden" name="items_json" id="inputItems">
 
                     <div class="mt-4 space-y-3">
-                        <div class="flex justify-between items-center py-2 border-t-2 border-indigo-200">
+                        <div class="flex justify-between items-center py-2 border-t-2 border-slate-300">
                             <span class="font-bold text-lg text-gray-700">Total</span>
-                            <span class="font-extrabold text-2xl text-indigo-600" id="displayTotal">Rp 0</span>
+                            <span class="font-extrabold text-2xl text-slate-700" id="displayTotal">Rp 0</span>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Nominal Bayar</label>

@@ -44,7 +44,7 @@ $total_barang_all = mysqli_fetch_assoc($q_barang_all)['c'] ?? 0;
 
 <div class="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
     <div>
-        <h1><i class="fas fa-tags text-indigo-600 mr-2"></i>Kategori Barang</h1>
+        <h1><i class="fas fa-tags text-slate-700 mr-2"></i>Kategori Barang</h1>
         <p>Kelola kelompok / jenis barang untuk memudahkan pencarian</p>
     </div>
     <button onclick="openModal('modalKategori')" class="btn btn-primary">
@@ -54,7 +54,7 @@ $total_barang_all = mysqli_fetch_assoc($q_barang_all)['c'] ?? 0;
 
 <!-- Stats Row -->
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-    <div class="stat-card stat-card-indigo">
+    <div class="stat-card stat-card-slate">
         <div class="stat-card-icon"><i class="fas fa-tags"></i></div>
         <div class="stat-card-value"><?= $total_kategori ?></div>
         <div class="stat-card-label">Total Kategori</div>
@@ -106,7 +106,7 @@ $total_barang_all = mysqli_fetch_assoc($q_barang_all)['c'] ?? 0;
                             <td style="min-width:120px">
                                 <div class="flex items-center gap-2">
                                     <div class="w-24 h-2 rounded-full bg-gray-200 overflow-hidden">
-                                        <div class="h-full rounded-full bg-indigo-500" 
+                                        <div class="h-full rounded-full bg-slate-600" 
                                              style="width: <?= $max_barang > 0 ? max(5, ($r['jml_barang'] / $max_barang) * 100) : 0 ?>%"></div>
                                     </div>
                                     <span class="text-xs text-gray-400"><?= $r['jml_barang'] ?></span>
@@ -149,7 +149,7 @@ $total_barang_all = mysqli_fetch_assoc($q_barang_all)['c'] ?? 0;
     <div class="modal-backdrop" onclick="closeModal('modalKategori')"></div>
     <div class="modal-content">
         <div class="modal-header">
-            <h3 id="modalTitle"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Tambah Kategori</h3>
+            <h3 id="modalTitle"><i class="fas fa-plus-circle text-slate-600 mr-2"></i>Tambah Kategori</h3>
             <button class="modal-close" onclick="closeModal('modalKategori')"><i class="fas fa-times"></i></button>
         </div>
         <form method="POST">

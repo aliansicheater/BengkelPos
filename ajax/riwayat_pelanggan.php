@@ -21,7 +21,7 @@ $q_servis = mysqli_query($conn, "SELECT s.*, u.nama_lengkap FROM servis s LEFT J
 
 <!-- Header Info -->
 <div class="flex items-center gap-3 mb-5 pb-4 border-b border-gray-200 dark:border-gray-700">
-    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
         <?= strtoupper(substr($pelanggan['nama'], 0, 1)) ?>
     </div>
     <div>
@@ -57,13 +57,13 @@ $q_servis = mysqli_query($conn, "SELECT s.*, u.nama_lengkap FROM servis s LEFT J
                 <div class="riwayat-card">
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-mono bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded font-semibold"><?= htmlspecialchars($r['no_invoice']) ?></span>
+                            <span class="text-[10px] font-mono bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded font-semibold"><?= htmlspecialchars($r['no_invoice']) ?></span>
                         </div>
                         <span class="text-[10px] text-gray-400"><?= tglIndo($r['tgl']) ?></span>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-xs text-gray-400">Kasir: <?= htmlspecialchars($r['nama_lengkap']) ?></span>
-                        <span class="font-bold text-sm text-indigo-600 dark:text-indigo-400"><?= rupiah($r['total']) ?></span>
+                        <span class="font-bold text-sm text-slate-700 dark:text-slate-500"><?= rupiah($r['total']) ?></span>
                     </div>
                     <div class="flex items-center gap-2 mt-1">
                         <span class="text-[10px] text-gray-400"><i class="fas fa-credit-card mr-0.5"></i>Bayar <?= rupiah($r['bayar']) ?></span>
@@ -129,11 +129,11 @@ $q_servis = mysqli_query($conn, "SELECT s.*, u.nama_lengkap FROM servis s LEFT J
         color: #6b7280;
         transition: all 0.2s;
     }
-    .tab-riwayat:hover { background: #eef2ff; color: #4f46e5; }
+    .tab-riwayat:hover { background: #f1f5f9; color: #1e293b; }
     .tab-riwayat.active {
-        background: #4f46e5;
+        background: #1e293b;
         color: white;
-        border-color: #4f46e5;
+        border-color: #1e293b;
     }
     .riwayat-card {
         padding: 10px 12px;
@@ -151,22 +151,22 @@ $q_servis = mysqli_query($conn, "SELECT s.*, u.nama_lengkap FROM servis s LEFT J
         border-color: #374151;
         color: #9ca3af;
     }
-    body.dark-mode .tab-riwayat:hover { background: #1e1b4b; color: #818cf8; }
-    body.dark-mode .tab-riwayat.active { background: #4f46e5; color: white; border-color: #4f46e5; }
+    body.dark-mode .tab-riwayat:hover { background: #374151; color: #f1f5f9; }
+    body.dark-mode .tab-riwayat.active { background: #64748b; color: white; border-color: #64748b; }
     body.dark-mode .riwayat-card {
         background: #1f2937;
         border-color: #374151;
     }
     body.dark-mode .riwayat-card:hover {
         background: #111827;
-        border-color: #4f46e5;
+        border-color: #374151;
     }
     </style>
 
 <?php else: ?>
     <div class="text-center py-12">
-        <div class="w-16 h-16 mx-auto rounded-2xl bg-indigo-50 dark:bg-gray-800 flex items-center justify-center mb-4">
-            <i class="fas fa-clock-rotate text-2xl text-indigo-300"></i>
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-slate-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+            <i class="fas fa-history text-2xl text-slate-400"></i>
         </div>
         <h4 class="font-semibold text-gray-400 mb-1">Belum Ada Riwayat</h4>
         <p class="text-xs text-gray-400">Pelanggan ini belum melakukan transaksi apapun</p>

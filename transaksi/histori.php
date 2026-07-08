@@ -55,7 +55,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
 ?>
 
 <div class="page-header">
-    <h1><i class="fas fa-clock-rotate text-indigo-600 mr-2"></i>Histori Transaksi</h1>
+    <h1><i class="fas fa-history text-slate-700 mr-2"></i>Histori Transaksi</h1>
     <p>Semua riwayat penjualan dan service motor</p>
 </div>
 
@@ -127,7 +127,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
                 <tbody>
                     <?php if (count($filtered) > 0): ?>
                         <?php foreach($filtered as $t): ?>
-                        <tr class="cursor-pointer hover:bg-indigo-50/50" onclick="showDetail('<?= $t['tipe_transaksi'] ?>', <?= $t['id'] ?>)">
+                        <tr class="cursor-pointer hover:bg-slate-100/50" onclick="showDetail('<?= $t['tipe_transaksi'] ?>', <?= $t['id'] ?>)">
                             <td><span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded"><?= htmlspecialchars($t['no_invoice']) ?></span></td>
                             <td><?= tglIndo($t['tgl']) ?></td>
                             <td>
@@ -138,7 +138,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
                             </td>
                             <td><?= htmlspecialchars($t['nama_pelanggan'] ?? '-') ?></td>
                             <td><?= htmlspecialchars($t['nama_lengkap']) ?></td>
-                            <td class="font-semibold text-indigo-600"><?= rupiah($t['tipe_transaksi'] == 'Penjualan' ? $t['total'] : $t['grand_total']) ?></td>
+                            <td class="font-semibold text-slate-700"><?= rupiah($t['tipe_transaksi'] == 'Penjualan' ? $t['total'] : $t['grand_total']) ?></td>
                             <td class="text-center">
                                 <a href="../cetak/struk.php?invoice=<?= $t['no_invoice'] ?>&tipe=<?= strtolower($t['tipe_transaksi']) ?>" target="_blank" 
                                    class="btn btn-sm btn-outline" onclick="event.stopPropagation()">
@@ -163,7 +163,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
     <div class="modal-backdrop" onclick="closeModal('modalDetail')"></div>
     <div class="modal-content" style="max-width:650px;">
         <div class="modal-header">
-            <h3><i class="fas fa-receipt text-indigo-500 mr-2"></i>Detail Transaksi</h3>
+            <h3><i class="fas fa-receipt text-slate-600 mr-2"></i>Detail Transaksi</h3>
             <button class="modal-close" onclick="closeModal('modalDetail')"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">

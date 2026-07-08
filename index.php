@@ -51,91 +51,194 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <style>
         * { font-family: 'Inter', sans-serif; }
         body {
-            background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #312E81 100%);
+            background: #F8FAFC;
             min-height: 100vh;
+            position: relative;
         }
+
+        /* SVG Doodle Background — mechanic theme, black & white */
+        .doodle-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .doodle-svg {
+            width: 100%;
+            height: 100%;
+            background: #F8FAFC;
+            background-image:
+                /* Wrench icons scattered */
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 24 24' fill='none' stroke='%23CBD5E1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z'/%3E%3C/svg%3E"),
+                /* Gear icons */
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24' fill='none' stroke='%23CBD5E1' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42'/%3E%3C/svg%3E"),
+                /* Tire/circle outlines */
+                radial-gradient(circle at 15% 20%, #E2E8F0 0%, transparent 2px),
+                radial-gradient(circle at 85% 15%, #E2E8F0 0%, transparent 3px),
+                radial-gradient(circle at 50% 85%, #E2E8F0 0%, transparent 2.5px),
+                /* Diagonal line patterns */
+                repeating-linear-gradient(-45deg, transparent, transparent 8px, #F1F5F9 8px, #F1F5F9 9px),
+                repeating-linear-gradient(45deg, transparent, transparent 20px, #F1F5F9 20px, #F1F5F9 21px);
+            background-size:
+                80px 80px,
+                100px 100px,
+                40px 40px,
+                40px 40px,
+                30px 30px,
+                50px 50px;
+            background-position:
+                5% 10%, 90% 5%, 50% 90%, 10% 80%, 80% 60%, 20% 40%;
+            background-repeat: repeat;
+        }
+
+        /* Dark overlay */
+        .doodle-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at 30% 50%, transparent 0%, #F8FAFC 70%);
+        }
+
         .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(24px);
             animation: slideUp 0.6s ease-out;
+            border: 1px solid rgba(0,0,0,0.06);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+
+        .login-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+        }
+
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(40px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
+
         .input-field {
             transition: all 0.3s ease;
+            border: 1.5px solid #E2E8F0;
         }
+
         .input-field:focus {
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            border-color: #1E293B;
+            box-shadow: 0 0 0 4px rgba(30, 41, 59, 0.1);
+            transform: translateY(-1px);
         }
+
+        .input-field:hover {
+            border-color: #94A3B8;
+        }
+
         .btn-login {
             transition: all 0.3s ease;
-            background: linear-gradient(135deg, #4F46E5, #7C3AED);
+            background: #1E293B;
+            position: relative;
+            overflow: hidden;
         }
+
+        .btn-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.5s ease;
+        }
+
         .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(30, 41, 59, 0.3);
+            background: #0F172A;
         }
+
+        .btn-login:hover::before {
+            left: 100%;
+        }
+
         .btn-login:active {
             transform: translateY(0);
         }
-        .bg-pattern {
-            position: fixed;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        .bg-pattern-2 {
-            position: fixed;
-            bottom: -50%;
-            left: -50%;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
-            pointer-events: none;
-        }
+
         .float-anim {
             animation: float 6s ease-in-out infinite;
         }
+
         @keyframes float {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
+
+        /* Input icon animation */
+        .input-group {
+            position: relative;
+        }
+
+        .input-group i {
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        .input-group:focus-within i {
+            transform: scale(1.1);
+            color: #1E293B;
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            body { background: #0F172A; }
+            .doodle-svg { background: #0F172A; }
+            .doodle-overlay { background: radial-gradient(ellipse at 30% 50%, transparent 0%, #0F172A 70%); }
+            .login-card { background: rgba(30, 41, 59, 0.92); border-color: rgba(255,255,255,0.06); }
+            .login-card h1 { color: #F1F5F9; }
+            .login-card p { color: #94A3B8; }
+            .login-card label { color: #CBD5E1; }
+            .input-field { background: #1E293B; border-color: #334155; color: #F1F5F9; }
+            .input-field:focus { border-color: #94A3B8; box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.1); }
+            .input-field:hover { border-color: #64748B; }
+        }
     </style>
 </head>
 <body class="flex items-center justify-center p-4 relative overflow-hidden">
-    <div class="bg-pattern"></div>
-    <div class="bg-pattern-2"></div>
 
-    <div class="login-card w-full max-w-md rounded-3xl shadow-2xl p-8 md:p-10 relative z-10">
+    <!-- Doodle Background -->
+    <div class="doodle-bg">
+        <div class="doodle-svg"></div>
+    </div>
+    <div class="doodle-overlay"></div>
+
+    <!-- Login Card -->
+    <div class="login-card w-full max-w-md rounded-3xl shadow-xl p-8 md:p-10 relative z-10">
         <!-- Logo -->
-            <div class="text-center mb-8">
-                <?php if ($app_logo): ?>
-                    <img src="/Bengkel POS/uploads/<?= htmlspecialchars($app_logo) ?>" alt="Logo" class="h-20 w-20 mx-auto object-contain mb-4 float-anim">
+        <div class="text-center mb-8">
+            <?php if ($app_logo): ?>
+                <img src="/Bengkel POS/uploads/<?= htmlspecialchars($app_logo) ?>" alt="Logo" class="h-20 w-20 mx-auto object-contain mb-4 float-anim">
+            <?php else: ?>
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-slate-700 to-slate-900 rounded-2xl shadow-lg mb-4 float-anim">
+                    <i class="fas fa-wrench text-white text-3xl"></i>
+                </div>
+            <?php endif; ?>
+            <h1 class="text-3xl font-extrabold text-gray-900">
+                <?php
+                $parts = preg_split('/(?=[A-Z][a-z]*$)/', $app_name, 2);
+                if (count($parts) > 1 && trim($parts[1])): ?>
+                    <?= htmlspecialchars($parts[0]) ?><span class="text-slate-600"><?= htmlspecialchars($parts[1]) ?></span>
                 <?php else: ?>
-                    <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl shadow-lg mb-4 float-anim">
-                        <i class="fas fa-wrench text-white text-3xl"></i>
-                    </div>
+                    <?= htmlspecialchars($app_name) ?>
                 <?php endif; ?>
-                <h1 class="text-3xl font-extrabold text-gray-900">
-                    <?php
-                    $parts = preg_split('/(?=[A-Z][a-z]*$)/', $app_name, 2);
-                    if (count($parts) > 1 && trim($parts[1])): ?>
-                        <?= htmlspecialchars($parts[0]) ?><span class="text-indigo-600"><?= htmlspecialchars($parts[1]) ?></span>
-                    <?php else: ?>
-                        <?= htmlspecialchars($app_name) ?>
-                    <?php endif; ?>
-                </h1>
-                <p class="text-gray-500 mt-1 text-sm">Sistem Manajemen Bengkel Profesional</p>
+            </h1>
+            <p class="text-gray-500 mt-1 text-sm">Sistem Manajemen Bengkel Profesional</p>
         </div>
 
         <!-- Error Alert -->
         <?php if ($error): ?>
-        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 text-sm flex items-center gap-3">
+        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 text-sm flex items-center gap-3 animate-pulse">
             <i class="fas fa-exclamation-circle"></i>
             <span><?= $error ?></span>
         </div>
@@ -143,20 +246,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <!-- Form -->
         <form method="POST" action="" class="space-y-5">
-            <div>
+            <div class="input-group">
                 <label class="block text-sm font-semibold text-gray-700 mb-2" for="username">
-                    <i class="fas fa-user text-indigo-500 mr-1"></i> Username
+                    <i class="fas fa-user text-slate-500 mr-1"></i> Username
                 </label>
                 <input type="text" id="username" name="username" required
-                    class="input-field w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-700 placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+                    class="input-field w-full px-4 py-3 rounded-xl text-gray-700 placeholder-gray-400 focus:outline-none"
                     placeholder="Masukkan username">
             </div>
-            <div>
+            <div class="input-group">
                 <label class="block text-sm font-semibold text-gray-700 mb-2" for="password">
-                    <i class="fas fa-lock text-indigo-500 mr-1"></i> Password
+                    <i class="fas fa-lock text-slate-500 mr-1"></i> Password
                 </label>
                 <input type="password" id="password" name="password" required
-                    class="input-field w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-700 placeholder-gray-400 focus:outline-none focus:border-indigo-500"
+                    class="input-field w-full px-4 py-3 rounded-xl text-gray-700 placeholder-gray-400 focus:outline-none"
                     placeholder="Masukkan password">
             </div>
             <button type="submit"
@@ -169,5 +272,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p>&copy; <?= date('Y') ?> <?= htmlspecialchars($app_name) ?>. All rights reserved.</p>
         </div>
     </div>
+
 </body>
 </html>

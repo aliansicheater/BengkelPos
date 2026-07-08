@@ -24,7 +24,7 @@ $q_mekanik = mysqli_query($conn, "SELECT * FROM mekanik ORDER BY nama_mekanik AS
 ?>
 
 <div class="page-header">
-    <h1><i class="fas fa-chart-bar text-indigo-600 mr-2"></i>Laporan Servis</h1>
+    <h1><i class="fas fa-chart-bar text-slate-700 mr-2"></i>Laporan Servis</h1>
     <p>Rekap transaksi service motor</p>
 </div>
 
