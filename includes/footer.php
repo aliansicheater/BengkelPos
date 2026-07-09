@@ -86,6 +86,6 @@ function confirmAction(message, callback) {
     }
 }
 </script>
-<script src="/BengkelPOS/assets/js/app.js"></script>
+<script src="/assets/js/app.js"></script>
 </body>
 </html>

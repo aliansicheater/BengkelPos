@@ -6,14 +6,14 @@
 function checkLogin() {
     if (session_status() === PHP_SESSION_NONE) session_start();
     if (!isset($_SESSION['user_id'])) {
-        header('Location: /BengkelPOS/index.php');
+        header('Location: /index.php');
         exit;
     }
 }
 
 function checkRole($role) {
     if ($_SESSION['role'] !== $role) {
-        header('Location: /BengkelPOS/dashboard.php');
+        header('Location: /dashboard.php');
         exit;
     }
 }
