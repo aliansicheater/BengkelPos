@@ -127,8 +127,8 @@ $total = mysqli_fetch_assoc($q_total);
     </div>
 </div>
 
-<script src="/assets/js/jspdf.umd.min.js"></script>
-<script src="/assets/js/jspdf.plugin.autotable.min.js"></script>
+<script src="assets/js/jspdf.umd.min.js"></script>
+<script src="assets/js/jspdf.plugin.autotable.min.js"></script>
 <script>
 function exportPDF() {
     const { jsPDF } = window.jspdf;

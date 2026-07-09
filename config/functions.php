@@ -6,14 +6,14 @@
 function checkLogin() {
     if (session_status() === PHP_SESSION_NONE) session_start();
     if (!isset($_SESSION['user_id'])) {
-        header('Location: /index.php');
+        header('Location: ' . BASE_URL . '/index.php');
         exit;
     }
 }
 
 function checkRole($role) {
     if ($_SESSION['role'] !== $role) {
-        header('Location: /dashboard.php');
+        header('Location: ' . BASE_URL . '/dashboard.php');
         exit;
     }
 }

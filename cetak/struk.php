@@ -45,7 +45,7 @@ if ($tipe === 'servis') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Struk - <?= htmlspecialchars($invoice) ?></title>
-    <link href="/assets/css/inter.css" rel="stylesheet">
+    <link href="assets/css/inter.css" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -250,6 +250,6 @@ if ($tipe === 'servis') {
             <i class="fas fa-print"></i> Cetak Struk
         </button>
     </div>
-    <link rel="stylesheet" href="/assets/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/all.min.css">
 </body>
 </html>

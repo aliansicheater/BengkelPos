@@ -1,7 +1,7 @@
 ﻿<?php
 session_start();
 if (isset($_SESSION['user_id'])) {
-    header('Location: /dashboard.php');
+    header('Location: ' . BASE_URL . '/dashboard.php');
     exit;
 }
 
@@ -45,9 +45,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($app_name) ?> - Login</title>
-    <script src="/assets/js/tailwind.min.js"></script>
-    <link rel="stylesheet" href="/assets/css/inter.css">
-    <link rel="stylesheet" href="/assets/css/all.min.css">
+    <base href="<?= BASE_URL_SLASH ?>">
+    <script src="assets/js/tailwind.min.js"></script>
+    <link rel="stylesheet" href="assets/css/inter.css">
+    <link rel="stylesheet" href="assets/css/all.min.css">
     <style>
         * { font-family: 'Inter', sans-serif; }
         body {
@@ -218,7 +219,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Logo -->
         <div class="text-center mb-8">
             <?php if ($app_logo): ?>
-                <img src="/uploads/<?= htmlspecialchars($app_logo) ?>" alt="Logo" class="h-20 w-20 mx-auto object-contain mb-4 float-anim">
+                <img src="uploads/<?= htmlspecialchars($app_logo) ?>" alt="Logo" class="h-20 w-20 mx-auto object-contain mb-4 float-anim">
             <?php else: ?>
                 <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-slate-700 to-slate-900 rounded-2xl shadow-lg mb-4 float-anim">
                     <i class="fas fa-wrench text-white text-3xl"></i>
