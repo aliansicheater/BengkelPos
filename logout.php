@@ -1,5 +1,5 @@
-﻿<?php
+<?php
 session_start();
 session_destroy();
-header('Location: /index.php');
+header('Location: /BengkelPOS/index.php');
 exit;

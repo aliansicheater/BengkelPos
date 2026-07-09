@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $page_title = 'Laporan Penjualan';
 require_once __DIR__ . '/../includes/header.php';
 
@@ -127,8 +127,8 @@ $total = mysqli_fetch_assoc($q_total);
     </div>
 </div>
 
-<script src="/assets/js/jspdf.umd.min.js"></script>
-<script src="/assets/js/jspdf.plugin.autotable.min.js"></script>
+<script src="/BengkelPOS/assets/js/jspdf.umd.min.js"></script>
+<script src="/BengkelPOS/assets/js/jspdf.plugin.autotable.min.js"></script>
 <script>
 function exportPDF() {
     const { jsPDF } = window.jspdf;

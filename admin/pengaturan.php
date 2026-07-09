@@ -140,7 +140,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
                     <label class="form-label">Logo Aplikasi</label>
                     <?php if ($set['logo']): ?>
                         <div class="flex items-center gap-3 mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                            <img src="/uploads/<?= htmlspecialchars($set['logo']) ?>" alt="Logo" class="h-12 w-auto rounded-lg">
+                            <img src="/BengkelPOS/uploads/<?= htmlspecialchars($set['logo']) ?>" alt="Logo" class="h-12 w-auto rounded-lg">
                             <span class="text-sm text-gray-500"><?= htmlspecialchars($set['logo']) ?></span>
                             <button type="submit" name="aksi" value="hapus_logo" class="btn btn-sm btn-danger ml-auto"><i class="fas fa-trash"></i></button>
                         </div>
