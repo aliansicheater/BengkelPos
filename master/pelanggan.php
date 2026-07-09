@@ -222,7 +222,7 @@ while($r = mysqli_fetch_assoc($q)) $pelanggan_list[] = $r;
 function riwayatPelanggan(id) {
     document.getElementById('riwayatContent').innerHTML = '<div class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-slate-600"></i><p class="text-sm text-gray-400 mt-2">Memuat riwayat...</p></div>';
     openModal('modalRiwayat');
-    fetch('/BengkelPOS/ajax/riwayat_pelanggan.php?id=' + id)
+    fetch('/ajax/riwayat_pelanggan.php?id=' + id)
         .then(r => r.text())
         .then(html => {
             document.getElementById('riwayatContent').innerHTML = html;

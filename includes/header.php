@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/functions.php';
 
@@ -23,10 +23,10 @@ $app_logo = $setting['logo'] ?? null;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($app_name) ?> - <?= $page_title ?? 'Dashboard' ?></title>
-    <script src="/BengkelPOS/assets/js/tailwind.min.js"></script>
-    <link rel="stylesheet" href="/BengkelPOS/assets/css/inter.css">
-    <link rel="stylesheet" href="/BengkelPOS/assets/css/all.min.css">
-    <link rel="stylesheet" href="/BengkelPOS/assets/css/style.css">
+    <script src="/assets/js/tailwind.min.js"></script>
+    <link rel="stylesheet" href="/assets/css/inter.css">
+    <link rel="stylesheet" href="/assets/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
 <!-- Doodle Background -->
@@ -43,7 +43,7 @@ $app_logo = $setting['logo'] ?? null;
     <div class="sidebar-logo">
         <div class="sidebar-logo-icon">
             <?php if ($app_logo): ?>
-                <img src="/BengkelPOS/uploads/<?= htmlspecialchars($app_logo) ?>" alt="Logo" class="w-8 h-8 object-contain">
+                <img src="/uploads/<?= htmlspecialchars($app_logo) ?>" alt="Logo" class="w-8 h-8 object-contain">
             <?php else: ?>
                 <i class="fas fa-wrench"></i>
             <?php endif; ?>
@@ -63,7 +63,7 @@ $app_logo = $setting['logo'] ?? null;
     <nav class="sidebar-menu">
         <div class="sidebar-menu-label">Menu Utama</div>
 
-        <a href="/BengkelPOS/dashboard.php" class="sidebar-item <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
+        <a href="/dashboard.php" class="sidebar-item <?= ($current_page == 'dashboard.php') ? 'active' : '' ?>">
             <i class="fas fa-chart-pie"></i>
             <span>Dashboard</span>
         </a>
@@ -71,27 +71,27 @@ $app_logo = $setting['logo'] ?? null;
         <!-- Master Data -->
         <div class="sidebar-menu-label" style="margin-top:0.5rem;">Master Data</div>
 
-        <a href="/BengkelPOS/master/barang.php" class="sidebar-item <?= ($current_page == 'barang.php') ? 'active' : '' ?>">
+        <a href="/master/barang.php" class="sidebar-item <?= ($current_page == 'barang.php') ? 'active' : '' ?>">
             <i class="fas fa-box"></i>
             <span>Barang</span>
         </a>
-        <a href="/BengkelPOS/master/kategori.php" class="sidebar-item <?= ($current_page == 'kategori.php') ? 'active' : '' ?>">
+        <a href="/master/kategori.php" class="sidebar-item <?= ($current_page == 'kategori.php') ? 'active' : '' ?>">
             <i class="fas fa-tags"></i>
             <span>Kategori</span>
         </a>
-        <a href="/BengkelPOS/master/pelanggan.php" class="sidebar-item <?= ($current_page == 'pelanggan.php') ? 'active' : '' ?>">
+        <a href="/master/pelanggan.php" class="sidebar-item <?= ($current_page == 'pelanggan.php') ? 'active' : '' ?>">
             <i class="fas fa-users"></i>
             <span>Pelanggan</span>
         </a>
-        <a href="/BengkelPOS/master/mekanik.php" class="sidebar-item <?= ($current_page == 'mekanik.php') ? 'active' : '' ?>">
+        <a href="/master/mekanik.php" class="sidebar-item <?= ($current_page == 'mekanik.php') ? 'active' : '' ?>">
             <i class="fas fa-user-gear"></i>
             <span>Mekanik</span>
         </a>
-        <a href="/BengkelPOS/master/jasa_servis.php" class="sidebar-item <?= ($current_page == 'jasa_servis.php') ? 'active' : '' ?>">
+        <a href="/master/jasa_servis.php" class="sidebar-item <?= ($current_page == 'jasa_servis.php') ? 'active' : '' ?>">
             <i class="fas fa-screwdriver-wrench"></i>
             <span>Jasa Servis</span>
         </a>
-        <a href="/BengkelPOS/master/supplier.php" class="sidebar-item <?= ($current_page == 'supplier.php') ? 'active' : '' ?>">
+        <a href="/master/supplier.php" class="sidebar-item <?= ($current_page == 'supplier.php') ? 'active' : '' ?>">
             <i class="fas fa-truck"></i>
             <span>Supplier</span>
         </a>
@@ -99,19 +99,19 @@ $app_logo = $setting['logo'] ?? null;
         <!-- Transaksi -->
         <div class="sidebar-menu-label" style="margin-top:0.5rem;">Transaksi</div>
 
-        <a href="/BengkelPOS/transaksi/penjualan.php" class="sidebar-item <?= ($current_page == 'penjualan.php') ? 'active' : '' ?>">
+        <a href="/transaksi/penjualan.php" class="sidebar-item <?= ($current_page == 'penjualan.php') ? 'active' : '' ?>">
             <i class="fas fa-cart-shopping"></i>
             <span>Penjualan</span>
         </a>
-        <a href="/BengkelPOS/transaksi/servis.php" class="sidebar-item <?= ($current_page == 'servis.php') ? 'active' : '' ?>">
+        <a href="/transaksi/servis.php" class="sidebar-item <?= ($current_page == 'servis.php') ? 'active' : '' ?>">
             <i class="fas fa-motorcycle"></i>
             <span>Service Motor</span>
         </a>
-        <a href="/BengkelPOS/transaksi/pembelian.php" class="sidebar-item <?= ($current_page == 'pembelian.php') ? 'active' : '' ?>">
+        <a href="/transaksi/pembelian.php" class="sidebar-item <?= ($current_page == 'pembelian.php') ? 'active' : '' ?>">
             <i class="fas fa-truck-loading"></i>
             <span>Pembelian / Restok</span>
         </a>
-        <a href="/BengkelPOS/transaksi/histori.php" class="sidebar-item <?= ($current_page == 'histori.php') ? 'active' : '' ?>">
+        <a href="/transaksi/histori.php" class="sidebar-item <?= ($current_page == 'histori.php') ? 'active' : '' ?>">
             <i class="fas fa-history"></i>
             <span>Histori Transaksi</span>
         </a>
@@ -119,15 +119,15 @@ $app_logo = $setting['logo'] ?? null;
         <!-- Laporan -->
         <div class="sidebar-menu-label" style="margin-top:0.5rem;">Laporan</div>
 
-        <a href="/BengkelPOS/laporan/index.php" class="sidebar-item <?= ($current_folder == 'laporan' && $current_page == 'index.php') ? 'active' : '' ?>">
+        <a href="/laporan/index.php" class="sidebar-item <?= ($current_folder == 'laporan' && $current_page == 'index.php') ? 'active' : '' ?>">
             <i class="fas fa-file-invoice"></i>
             <span>Penjualan</span>
         </a>
-        <a href="/BengkelPOS/laporan/servis.php" class="sidebar-item <?= ($current_page == 'servis.php' && $current_folder == 'laporan') ? 'active' : '' ?>">
+        <a href="/laporan/servis.php" class="sidebar-item <?= ($current_page == 'servis.php' && $current_folder == 'laporan') ? 'active' : '' ?>">
             <i class="fas fa-chart-bar"></i>
             <span>Servis</span>
         </a>
-        <a href="/BengkelPOS/laporan/stok.php" class="sidebar-item <?= ($current_page == 'stok.php') ? 'active' : '' ?>">
+        <a href="/laporan/stok.php" class="sidebar-item <?= ($current_page == 'stok.php') ? 'active' : '' ?>">
             <i class="fas fa-warehouse"></i>
             <span>Stok Barang</span>
         </a>
@@ -135,11 +135,11 @@ $app_logo = $setting['logo'] ?? null;
         <?php if ($is_admin): ?>
         <!-- Pengaturan -->
         <div class="sidebar-menu-label" style="margin-top:0.5rem;">Pengaturan</div>
-        <a href="/BengkelPOS/admin/users.php" class="sidebar-item <?= ($current_page == 'users.php') ? 'active' : '' ?>">
+        <a href="/admin/users.php" class="sidebar-item <?= ($current_page == 'users.php') ? 'active' : '' ?>">
             <i class="fas fa-shield-halved"></i>
             <span>Manajemen User</span>
         </a>
-        <a href="/BengkelPOS/admin/pengaturan.php" class="sidebar-item <?= ($current_page == 'pengaturan.php') ? 'active' : '' ?>">
+        <a href="/admin/pengaturan.php" class="sidebar-item <?= ($current_page == 'pengaturan.php') ? 'active' : '' ?>">
             <i class="fas fa-gear"></i>
             <span>Pengaturan</span>
         </a>
@@ -162,7 +162,7 @@ $app_logo = $setting['logo'] ?? null;
             <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark Mode">
                 <i class="fas fa-moon" id="themeIcon"></i>
             </button>
-            <div class="topbar-user" onclick="window.location.href='/BengkelPOS/logout.php'">
+            <div class="topbar-user" onclick="window.location.href='/logout.php'">
                 <div class="topbar-user-avatar">
                     <?= strtoupper(substr($_SESSION['nama_lengkap'], 0, 1)) ?>
                 </div>

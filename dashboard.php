@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $page_title = 'Dashboard';
 require_once __DIR__ . '/includes/header.php';
 
@@ -50,7 +50,7 @@ for ($i = 5; $i >= 0; $i--) {
 }
 ?>
 
-<script src="/BengkelPOS/assets/js/chart.umd.min.js"></script>
+<script src="/assets/js/chart.umd.min.js"></script>
 
 <div class="page-header">
     <h1><i class="fas fa-chart-pie text-slate-700 mr-2"></i>Dashboard</h1>
